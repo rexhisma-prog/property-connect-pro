@@ -31,7 +31,7 @@ export default function Login() {
 
   const handleGoogle = async () => {
     const { error } = await signInWithGoogle();
-    if (error) toast.error('Gabim me Google login');
+    if (error) toast.error('Gabim me Google: ' + (error as any).message);
   };
 
   return (
