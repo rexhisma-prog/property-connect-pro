@@ -21,6 +21,7 @@ import Dashboard from "./pages/dashboard/Dashboard";
 import MyProperties from "./pages/dashboard/MyProperties";
 import NewProperty from "./pages/dashboard/NewProperty";
 import BuyCredits from "./pages/dashboard/BuyCredits";
+import EditProperty from "./pages/dashboard/EditProperty";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -56,6 +57,7 @@ const App = () => (
             <Route path="/dashboard/properties" element={<ProtectedRoute><MyProperties /></ProtectedRoute>} />
             <Route path="/dashboard/properties/new" element={<ProtectedRoute><NewProperty /></ProtectedRoute>} />
             <Route path="/dashboard/credits" element={<ProtectedRoute><BuyCredits /></ProtectedRoute>} />
+            <Route path="/dashboard/properties/:id/edit" element={<ProtectedRoute><EditProperty /></ProtectedRoute>} />
 
             {/* Admin */}
             <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
