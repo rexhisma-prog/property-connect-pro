@@ -34,6 +34,7 @@ export default function EditProperty() {
     bedrooms: '',
     bathrooms: '',
     area_m2: '',
+    has_pranim_teknik: false,
   });
 
   useEffect(() => {
@@ -66,6 +67,7 @@ export default function EditProperty() {
       bedrooms: data.bedrooms ? String(data.bedrooms) : '',
       bathrooms: data.bathrooms ? String(data.bathrooms) : '',
       area_m2: data.area_m2 ? String(data.area_m2) : '',
+      has_pranim_teknik: (data as any).has_pranim_teknik ?? false,
     });
     setImages(data.images || []);
     setFetching(false);
@@ -126,7 +128,8 @@ export default function EditProperty() {
       bathrooms: form.bathrooms ? parseInt(form.bathrooms) : null,
       area_m2: form.area_m2 ? parseFloat(form.area_m2) : null,
       images,
-    }).eq('id', id!).eq('user_id', user!.id);
+      has_pranim_teknik: form.has_pranim_teknik,
+    } as any).eq('id', id!).eq('user_id', user!.id);
 
     if (error) {
       toast.error('Gabim: ' + error.message);
@@ -237,6 +240,19 @@ export default function EditProperty() {
                   placeholder="0" className="mt-1" min="0" />
               </div>
             </div>
+            {/* Pranim Teknik */}
+            <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-border hover:bg-secondary transition-colors">
+              <input
+                type="checkbox"
+                checked={form.has_pranim_teknik}
+                onChange={e => setForm(prev => ({ ...prev, has_pranim_teknik: e.target.checked }))}
+                className="w-4 h-4 accent-primary rounded"
+              />
+              <div>
+                <p className="font-medium text-sm text-foreground">Ka Pranim Teknik</p>
+                <p className="text-xs text-muted-foreground">Prona posedon dokumentin e pranimit teknik</p>
+              </div>
+            </label>
           </div>
 
           <div className="bg-card border border-border rounded-2xl p-6 space-y-4">

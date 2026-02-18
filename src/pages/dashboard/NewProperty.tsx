@@ -33,6 +33,7 @@ export default function NewProperty() {
     bedrooms: '',
     bathrooms: '',
     area_m2: '',
+    has_pranim_teknik: false,
   });
 
   useEffect(() => {
@@ -132,7 +133,8 @@ export default function NewProperty() {
       images,
       status: publish ? 'active' : 'draft',
       expires_at: expiresAt,
-    }).select().single();
+      has_pranim_teknik: form.has_pranim_teknik,
+    } as any).select().single();
 
     if (error) {
       toast.error('Gabim: ' + error.message);
@@ -256,6 +258,19 @@ export default function NewProperty() {
                   placeholder="0" className="mt-1" min="0" />
               </div>
             </div>
+            {/* Pranim Teknik */}
+            <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-border hover:bg-secondary transition-colors">
+              <input
+                type="checkbox"
+                checked={form.has_pranim_teknik}
+                onChange={e => setForm(prev => ({ ...prev, has_pranim_teknik: e.target.checked }))}
+                className="w-4 h-4 accent-primary rounded"
+              />
+              <div>
+                <p className="font-medium text-sm text-foreground">Ka Pranim Teknik</p>
+                <p className="text-xs text-muted-foreground">Prona posedon dokumentin e pranimit teknik</p>
+              </div>
+            </label>
           </div>
 
           <div className="bg-card border border-border rounded-2xl p-6 space-y-4">

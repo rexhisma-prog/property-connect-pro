@@ -1,0 +1,1 @@
+ALTER TABLE public.properties ADD COLUMN IF NOT EXISTS has_pranim_teknik boolean NOT NULL DEFAULT false;

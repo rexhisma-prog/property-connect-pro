@@ -291,6 +291,19 @@ export default function PropertyDetails() {
                 </div>
               </div>
 
+              {/* Pranim Teknik badge */}
+              <div className="flex items-center gap-2">
+                {(property as any).has_pranim_teknik ? (
+                  <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary border border-primary/30 bg-primary/10 rounded-full px-3 py-1">
+                    ✓ Ka Pranim Teknik
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground border border-border bg-secondary rounded-full px-3 py-1">
+                    ✗ Pa Pranim Teknik
+                  </span>
+                )}
+              </div>
+
               {/* Description */}
               {property.description && (
                 <div>
