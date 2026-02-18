@@ -125,7 +125,7 @@ export default function Index() {
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { icon: Shield, title: 'I Sigurt', desc: 'RLS Security në çdo nivel' },
+              { icon: Shield, title: 'I Sigurt', desc: 'Platforma e sigurt për blerës dhe shitës' },
               { icon: Zap, title: 'I Shpejtë', desc: 'Postim pronë në 2 minuta' },
               { icon: CreditCard, title: 'Çmime të Ulëta', desc: 'Nga €25 për postim' },
               { icon: TrendingUp, title: 'Statistika', desc: 'Shikimet & kontaktet live' },
