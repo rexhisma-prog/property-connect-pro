@@ -94,7 +94,7 @@ export default function HeroSection() {
                 className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary appearance-none cursor-pointer"
               >
                 <option value="">Lloji i pronës</option>
-                <option value="apartment">Apartament</option>
+                <option value="apartment">Banesë</option>
                 <option value="house">Shtëpi</option>
                 <option value="land">Tokë</option>
                 <option value="commercial">Lokal/Komercial</option>

@@ -189,7 +189,7 @@ export default function EditProperty() {
                 <Label>Lloji i Pronës <span className="text-destructive">*</span></Label>
                 <select value={form.property_type} onChange={e => set('property_type', e.target.value)}
                   className="w-full mt-1 px-3 py-2 border border-border rounded-lg bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary">
-                  <option value="apartment">Apartament</option>
+                  <option value="apartment">Banesë</option>
                   <option value="house">Shtëpi</option>
                   <option value="land">Tokë</option>
                   <option value="commercial">Lokal/Komercial</option>

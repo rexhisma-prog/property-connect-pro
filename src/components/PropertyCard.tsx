@@ -100,7 +100,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
             </span>
           )}
           <span className="ml-auto text-muted-foreground capitalize">
-            {property.property_type === 'apartment' ? 'Apartament' : 
+            {property.property_type === 'apartment' ? 'Banesë' : 
              property.property_type === 'house' ? 'Shtëpi' :
              property.property_type === 'land' ? 'Tokë' : 'Lokal'}
           </span>
