@@ -414,6 +414,7 @@ export type Database = {
           description: string | null
           expires_at: string | null
           featured_until: string | null
+          has_flete_poseduese: boolean
           has_leje_ndertimi: boolean
           has_pranim_teknik: boolean
           id: string
@@ -444,6 +445,7 @@ export type Database = {
           description?: string | null
           expires_at?: string | null
           featured_until?: string | null
+          has_flete_poseduese?: boolean
           has_leje_ndertimi?: boolean
           has_pranim_teknik?: boolean
           id?: string
@@ -474,6 +476,7 @@ export type Database = {
           description?: string | null
           expires_at?: string | null
           featured_until?: string | null
+          has_flete_poseduese?: boolean
           has_leje_ndertimi?: boolean
           has_pranim_teknik?: boolean
           id?: string
