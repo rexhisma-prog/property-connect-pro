@@ -32,20 +32,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (data) {
       setProfile(data as UserProfile);
     } else if (authUser) {
-      // Auto-create profile if missing (e.g. Google OAuth users)
+      // Upsert profile if missing (e.g. Google OAuth users)
       const { data: newProfile } = await supabase
         .from('users')
-        .insert({
+        .upsert({
           id: authUser.id,
           email: authUser.email!,
           full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || authUser.email?.split('@')[0] || '',
           role: 'user',
           status: 'active',
           credits_remaining: 3,
-        })
+        }, { onConflict: 'id', ignoreDuplicates: true })
         .select()
         .single();
       if (newProfile) setProfile(newProfile as UserProfile);
+      // Try fetching again in case upsert was ignored (user already existed)
+      else {
+        const { data: existing } = await supabase.from('users').select('*').eq('id', userId).single();
+        if (existing) setProfile(existing as UserProfile);
+      }
     }
   };
 
