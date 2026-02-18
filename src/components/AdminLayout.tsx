@@ -13,6 +13,7 @@ const navItems = [
   { to: '/admin', label: 'Dashboard', icon: BarChart3, exact: true },
   { to: '/admin/users', label: 'Përdoruesit', icon: Users },
   { to: '/admin/properties', label: 'Pronat', icon: Home },
+  { to: '/admin/social-photos', label: 'Galeria Sociale', icon: Star },
   { to: '/admin/keywords', label: 'Keywords', icon: Key },
   { to: '/admin/credit-packages', label: 'Paketat Kredite', icon: Package },
   { to: '/admin/extra-packages', label: 'Extras', icon: Star },

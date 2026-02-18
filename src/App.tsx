@@ -33,6 +33,7 @@ import AdminAds from "./pages/admin/AdminAds";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminPackages from "./pages/admin/AdminPackages";
 import AdminSettings from "./pages/admin/AdminSettings";
+import AdminSocialPhotos from "./pages/admin/AdminSocialPhotos";
 
 const queryClient = new QueryClient();
 
@@ -71,6 +72,7 @@ const App = () => (
             <Route path="/admin/credit-packages" element={<ProtectedRoute adminOnly><AdminPackages /></ProtectedRoute>} />
             <Route path="/admin/extra-packages" element={<ProtectedRoute adminOnly><AdminPackages /></ProtectedRoute>} />
             <Route path="/admin/settings" element={<ProtectedRoute adminOnly><AdminSettings /></ProtectedRoute>} />
+            <Route path="/admin/social-photos" element={<ProtectedRoute adminOnly><AdminSocialPhotos /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
