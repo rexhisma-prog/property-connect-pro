@@ -32,7 +32,7 @@ export default function Login() {
 
   const handleGoogle = async () => {
     const result = await lovable.auth.signInWithOAuth('google', {
-      redirect_uri: window.location.origin,
+      redirect_uri: `${window.location.origin}/dashboard`,
     });
     if (result?.error) toast.error('Gabim me Google: ' + (result.error as any).message);
   };
