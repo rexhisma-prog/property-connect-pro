@@ -25,7 +25,7 @@ export default function BuyCredits() {
   const handleBuy = async (pkg: CreditPackage) => {
     setBuying(pkg.id);
     // In production, this would redirect to Stripe
-    toast.info('Integrimi me Stripe do të aktivizohet së shpejti. Kontaktoni: info@shitepronen.com');
+    toast.info('Integrimi me Stripe do të aktivizohet së shpejti. Kontaktoni: marketing@shitepronen.com');
     setBuying(null);
   };
 
