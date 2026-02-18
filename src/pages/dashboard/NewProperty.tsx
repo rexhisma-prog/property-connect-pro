@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,13 +9,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { CITIES } from '@/lib/supabase-types';
-import { Upload, X, Loader2, Info } from 'lucide-react';
+import { Upload, X, Loader2, Info, FlaskConical } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function NewProperty() {
   const { user, profile, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [testingMode, setTestingMode] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -33,6 +34,17 @@ export default function NewProperty() {
     bathrooms: '',
     area_m2: '',
   });
+
+  useEffect(() => {
+    supabase
+      .from('platform_settings')
+      .select('value')
+      .eq('key', 'testing_mode')
+      .single()
+      .then(({ data }) => {
+        if (data?.value === 'true') setTestingMode(true);
+      });
+  }, []);
 
   const set = (key: string, value: string) => setForm(prev => ({ ...prev, [key]: value }));
 
@@ -82,12 +94,11 @@ export default function NewProperty() {
       return;
     }
 
-    if (publish && (profile?.credits_remaining ?? 0) <= 0) {
+    if (publish && !testingMode && (profile?.credits_remaining ?? 0) <= 0) {
       toast.error('Nuk keni kredite! Blini kredite për të publikuar.');
       return;
     }
 
-    // Keyword check
     const textToCheck = `${form.title} ${form.description} ${profile?.full_name || ''}`;
     const matched = await checkKeywords(textToCheck);
     if (matched) {
@@ -129,20 +140,19 @@ export default function NewProperty() {
       return;
     }
 
-    // Deduct credit if publishing
-    if (publish && data) {
+    if (publish && data && !testingMode) {
       await supabase.from('users').update({
         credits_remaining: profile!.credits_remaining - 1
       }).eq('id', user!.id);
       await refreshProfile();
-      toast.success('Prona u publikua me sukses!');
-    } else {
-      toast.success('Prona u ruajt si draft!');
     }
 
+    toast.success(publish ? 'Prona u publikua me sukses!' : 'Prona u ruajt si draft!');
     navigate('/dashboard/properties');
     setLoading(false);
   };
+
+  const canPublish = testingMode || (profile?.credits_remaining ?? 0) > 0;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -151,11 +161,17 @@ export default function NewProperty() {
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-foreground">Shto Pronë të Re</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Kredite: <span className="text-primary font-semibold">{profile?.credits_remaining}</span> · Publikimi konsumon 1 kredit
+            {testingMode ? (
+              <span className="inline-flex items-center gap-1 font-medium" style={{ color: '#d97706' }}>
+                <FlaskConical className="w-3.5 h-3.5" /> Modaliteti i Testimit — Postimi është falas
+              </span>
+            ) : (
+              <>Kredite: <span className="text-primary font-semibold">{profile?.credits_remaining}</span> · Publikimi konsumon 1 kredit</>
+            )}
           </p>
         </div>
 
-        {(profile?.credits_remaining ?? 0) === 0 && (
+        {!testingMode && (profile?.credits_remaining ?? 0) === 0 && (
           <div className="bg-accent border border-primary/20 rounded-xl p-4 mb-6 flex items-center gap-3">
             <Info className="w-5 h-5 text-primary flex-shrink-0" />
             <p className="text-sm">Nuk keni kredite. <a href="/dashboard/credits" className="text-primary underline font-medium">Blini kredite</a> për të publikuar pronën.</p>
@@ -163,22 +179,18 @@ export default function NewProperty() {
         )}
 
         <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-6">
-          {/* Basic Info */}
           <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
             <h2 className="font-semibold text-foreground">Informata Bazë</h2>
-
             <div>
               <Label htmlFor="title">Titulli <span className="text-destructive">*</span></Label>
               <Input id="title" value={form.title} onChange={e => set('title', e.target.value)}
                 placeholder="p.sh. Apartament 2+1 me pamje, Prishtinë" className="mt-1" required />
             </div>
-
             <div>
               <Label htmlFor="description">Përshkrimi</Label>
               <Textarea id="description" value={form.description} onChange={e => set('description', e.target.value)}
                 placeholder="Përshkruani pronën në detaje..." className="mt-1 min-h-28" rows={4} />
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Lloji i Pronës <span className="text-destructive">*</span></Label>
@@ -201,10 +213,8 @@ export default function NewProperty() {
             </div>
           </div>
 
-          {/* Location & Price */}
           <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
             <h2 className="font-semibold text-foreground">Vendndodhja & Çmimi</h2>
-
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Qyteti <span className="text-destructive">*</span></Label>
@@ -220,7 +230,6 @@ export default function NewProperty() {
                   placeholder="Rruga, numri..." className="mt-1" />
               </div>
             </div>
-
             <div>
               <Label htmlFor="price">Çmimi (EUR) <span className="text-destructive">*</span></Label>
               <Input id="price" type="number" value={form.price} onChange={e => set('price', e.target.value)}
@@ -228,7 +237,6 @@ export default function NewProperty() {
             </div>
           </div>
 
-          {/* Details */}
           <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
             <h2 className="font-semibold text-foreground">Detajet</h2>
             <div className="grid grid-cols-3 gap-4">
@@ -250,10 +258,8 @@ export default function NewProperty() {
             </div>
           </div>
 
-          {/* Images */}
           <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
             <h2 className="font-semibold text-foreground">Fotot ({images.length}/10)</h2>
-
             <div
               className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:border-primary/50 hover:bg-accent/30 transition-colors"
               onClick={() => fileInputRef.current?.click()}
@@ -267,14 +273,7 @@ export default function NewProperty() {
                 {uploading ? 'Duke ngarkuar...' : 'Kliko ose zvarrit fotot këtu'}
               </p>
               <p className="text-xs text-muted-foreground mt-1">JPG, PNG, WebP · Max 10MB secila · Max 10 foto</p>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={handleImageUpload}
-              />
+              <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} />
             </div>
 
             {images.length > 0 && (
@@ -300,18 +299,17 @@ export default function NewProperty() {
             )}
           </div>
 
-          {/* Actions */}
           <div className="flex gap-3">
             <Button type="submit" variant="outline" disabled={loading} className="flex-1">
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Ruaj si Draft'}
             </Button>
             <Button
               type="button"
-              disabled={loading || (profile?.credits_remaining ?? 0) === 0}
+              disabled={loading || !canPublish}
               className="flex-1 btn-orange"
               onClick={(e) => handleSubmit(e as any, true)}
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Publiko (1 kredit)'}
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : testingMode ? 'Publiko (Falas)' : 'Publiko (1 kredit)'}
             </Button>
           </div>
         </form>
