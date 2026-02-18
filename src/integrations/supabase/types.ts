@@ -110,6 +110,7 @@ export type Database = {
           advertiser_email: string
           advertiser_name: string
           amount_paid: number | null
+          country: string | null
           created_at: string
           end_date: string | null
           id: string
@@ -126,6 +127,7 @@ export type Database = {
           advertiser_email: string
           advertiser_name: string
           amount_paid?: number | null
+          country?: string | null
           created_at?: string
           end_date?: string | null
           id?: string
@@ -142,6 +144,7 @@ export type Database = {
           advertiser_email?: string
           advertiser_name?: string
           amount_paid?: number | null
+          country?: string | null
           created_at?: string
           end_date?: string | null
           id?: string

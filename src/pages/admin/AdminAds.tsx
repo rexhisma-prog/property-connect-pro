@@ -32,6 +32,12 @@ export default function AdminAds() {
     fetchAds();
   };
 
+  const setAdCountry = async (id: string, country: string | null) => {
+    await supabase.from('ads').update({ country } as any).eq('id', id);
+    toast.success('Vendi u përditësua');
+    fetchAds();
+  };
+
   const rejectAd = async (id: string) => {
     await supabase.from('ads').update({ status: 'rejected' }).eq('id', id);
     toast.success('Reklama u refuzua');
@@ -63,7 +69,7 @@ export default function AdminAds() {
           <table className="w-full text-sm">
             <thead className="bg-secondary text-left">
               <tr>
-                {['Reklamues', 'Titulli', 'Pozicioni', 'Media', 'Statusi', 'Data', 'Veprime'].map(h => (
+                {['Reklamues', 'Titulli', 'Pozicioni', 'Vendi', 'Media', 'Statusi', 'Data', 'Veprime'].map(h => (
                   <th key={h} className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">{h}</th>
                 ))}
               </tr>
@@ -83,6 +89,17 @@ export default function AdminAds() {
                   </td>
                   <td className="px-4 py-3 font-medium">{ad.title}</td>
                   <td className="px-4 py-3 text-muted-foreground text-xs">{ad.ad_positions?.display_name || '—'}</td>
+                  <td className="px-4 py-3">
+                    <select
+                      value={ad.country || ''}
+                      onChange={e => setAdCountry(ad.id, e.target.value || null)}
+                      className="text-xs border border-border rounded-lg px-2 py-1 bg-background focus:outline-none"
+                    >
+                      <option value="">🌍 Të gjitha</option>
+                      <option value="kosovo">🇽🇰 Kosovë</option>
+                      <option value="albania">🇦🇱 Shqipëri</option>
+                    </select>
+                  </td>
                   <td className="px-4 py-3">
                     {ad.media_url ? (
                       <a href={ad.media_url} target="_blank" className="text-primary text-xs underline flex items-center gap-1">

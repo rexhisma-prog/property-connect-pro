@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ExternalLink } from 'lucide-react';
+import { useCountry } from '@/contexts/CountryContext';
 
 interface Ad {
   id: string;
@@ -18,10 +19,11 @@ interface AdBannerProps {
 
 export default function AdBanner({ position, className = '' }: AdBannerProps) {
   const [ad, setAd] = useState<Ad | null>(null);
+  const { country } = useCountry();
 
   useEffect(() => {
     fetchAd();
-  }, [position]);
+  }, [position, country]);
 
   const fetchAd = async () => {
     const { data: pos } = await supabase
@@ -34,23 +36,29 @@ export default function AdBanner({ position, className = '' }: AdBannerProps) {
     if (!pos) return;
 
     const now = new Date().toISOString();
-    const { data } = await supabase
+    let query = supabase
       .from('ads')
-      .select('id, title, media_url, media_type, link_url, advertiser_name')
+      .select('id, title, media_url, media_type, link_url, advertiser_name, country')
       .eq('position_id', pos.id)
       .eq('status', 'active')
       .lte('start_date', now)
-      .gte('end_date', now)
-      .limit(1)
-      .maybeSingle();
+      .gte('end_date', now);
+
+    // If country is selected, show ads for that country OR global ads (null)
+    if (country) {
+      query = (query as any).or(`country.eq.${country},country.is.null`);
+    }
+
+    const { data } = await query.limit(1).maybeSingle();
 
     if (data) {
       setAd(data as Ad);
-      // Track impression
       await supabase.from('ad_events').insert({
         ad_id: data.id,
         event_type: 'impression',
       });
+    } else {
+      setAd(null);
     }
   };
 

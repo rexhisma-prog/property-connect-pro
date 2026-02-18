@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import AdBanner from '@/components/AdBanner';
 import { supabase } from '@/integrations/supabase/client';
 import { Property, CITIES_BY_COUNTRY, Country } from '@/lib/supabase-types';
@@ -7,12 +7,14 @@ import PropertyCard from '@/components/PropertyCard';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import { Search, MapPin, SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal } from 'lucide-react';
+import { useCountry } from '@/contexts/CountryContext';
 
 const PAGE_SIZE = 20;
 
 export default function Properties() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
+  const { setCountry: setGlobalCountry } = useCountry();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
@@ -28,6 +30,13 @@ export default function Properties() {
     max_price: searchParams.get('max_price') || '',
     bedrooms: '',
   });
+
+  // Sync URL country param to global context (for AdBanner)
+  useEffect(() => {
+    const urlCountry = (searchParams.get('country') || '') as Country | '';
+    setFilters(prev => ({ ...prev, country: urlCountry, city: searchParams.get('city') || '' }));
+    setGlobalCountry(urlCountry);
+  }, [searchParams]);
 
   const availableCities = filters.country
     ? CITIES_BY_COUNTRY[filters.country]
