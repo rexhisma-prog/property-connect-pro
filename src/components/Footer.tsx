@@ -89,7 +89,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-white/10 mt-5 pt-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p className="text-xs text-white/35">© 2024 ShitëPronen.com. Të gjitha të drejtat e rezervuara.</p>
+          <p className="text-xs text-white/35">© 2025 ShitëPronen.com. Të gjitha të drejtat e rezervuara.</p>
           <p className="text-xs text-white/35">Bërë me ❤️ për Kosovë & Shqipëri</p>
         </div>
       </div>
