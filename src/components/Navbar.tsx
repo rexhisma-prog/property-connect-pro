@@ -13,6 +13,7 @@ import {
 import { cn } from '@/lib/utils';
 import logo from '@/assets/logo.png';
 import { Country } from '@/lib/supabase-types';
+import { useCountry } from '@/contexts/CountryContext';
 
 
 export default function Navbar() {
@@ -20,18 +21,23 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { country, setCountry } = useCountry();
 
-  // Extract country from current URL if on /properties
-  const searchParams = new URLSearchParams(location.search);
-  const currentCountry = location.pathname === '/properties' ? (searchParams.get('country') || '') : '';
-
-  const handleCountryClick = (country: Country | '') => {
+  const handleCountryClick = (c: Country | '') => {
+    setCountry(c);
+    // Also update URL if on properties page
     const params = new URLSearchParams(location.search);
-    if (country) params.set('country', country);
+    if (c) params.set('country', c);
     else params.delete('country');
-    params.delete('city'); // reset city on country change
+    params.delete('city');
     navigate(`/properties?${params.toString()}`);
   };
+
+  // Sync context with URL on /properties page
+  const urlCountry = location.pathname === '/properties'
+    ? (new URLSearchParams(location.search).get('country') as Country | null)
+    : null;
+  const currentCountry = urlCountry !== null ? urlCountry : country;
 
   const handleSignOut = async () => {
     await signOut();

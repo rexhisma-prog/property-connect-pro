@@ -3,16 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { Search, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CITIES_BY_COUNTRY, Country } from '@/lib/supabase-types';
+import { useCountry } from '@/contexts/CountryContext';
 import heroBg from '@/assets/hero-bg.jpg';
 
 export default function HeroSection() {
   const navigate = useNavigate();
+  const { country, setCountry } = useCountry();
   const [listingType, setListingType] = useState<'shitje' | 'qira'>('shitje');
-  const [country, setCountry] = useState<Country | ''>('');
   const [city, setCity] = useState('');
   const [propertyType, setPropertyType] = useState('');
   const [minPrice, setMinPrice] = useState('');
-  const [maxPrice, setMaxPrice] = useState('');
 
   const availableCities = country ? CITIES_BY_COUNTRY[country] : [...CITIES_BY_COUNTRY.kosovo, ...CITIES_BY_COUNTRY.albania];
 
@@ -28,7 +28,7 @@ export default function HeroSection() {
     if (city) params.set('city', city);
     if (propertyType) params.set('property_type', propertyType);
     if (minPrice) params.set('min_price', minPrice);
-    if (maxPrice) params.set('max_price', maxPrice);
+    if (minPrice) params.set('min_price', minPrice);
     navigate(`/properties?${params.toString()}`);
   };
 
