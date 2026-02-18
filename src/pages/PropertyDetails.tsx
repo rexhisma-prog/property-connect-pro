@@ -24,6 +24,7 @@ export default function PropertyDetails() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [property, setProperty] = useState<Property | null>(null);
+  const [ownerPhone, setOwnerPhone] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentImage, setCurrentImage] = useState(0);
   const [showPhone, setShowPhone] = useState(false);
@@ -43,6 +44,13 @@ export default function PropertyDetails() {
 
     if (data) {
       setProperty(data as Property);
+      // Fetch owner phone
+      const { data: owner } = await supabase
+        .from('users')
+        .select('phone')
+        .eq('id', data.user_id)
+        .single();
+      if (owner?.phone) setOwnerPhone(owner.phone);
       // Track view
       await supabase.from('property_events').insert({
         property_id: id!,
@@ -309,16 +317,25 @@ export default function PropertyDetails() {
 
                 <div className="space-y-3">
                   {/* Phone */}
-                  <Button
-                    className="w-full btn-orange gap-2"
-                    onClick={() => {
-                      setShowPhone(true);
-                      handleContactClick('phone_click');
-                    }}
-                  >
-                    <Phone className="w-4 h-4" />
-                    {showPhone ? '+383 44 XXX XXX' : 'Shiko Numrin'}
-                  </Button>
+                  {showPhone && ownerPhone ? (
+                    <a href={`tel:${ownerPhone}`} className="block w-full">
+                      <Button className="w-full btn-orange gap-2">
+                        <Phone className="w-4 h-4" />
+                        {ownerPhone}
+                      </Button>
+                    </a>
+                  ) : (
+                    <Button
+                      className="w-full btn-orange gap-2"
+                      onClick={() => {
+                        setShowPhone(true);
+                        handleContactClick('phone_click');
+                      }}
+                    >
+                      <Phone className="w-4 h-4" />
+                      {ownerPhone ? 'Shiko Numrin' : 'Nuk ka numër'}
+                    </Button>
+                  )}
 
                   {/* WhatsApp */}
                   <Button
@@ -326,7 +343,8 @@ export default function PropertyDetails() {
                     className="w-full gap-2 border-green-600 text-green-700 hover:bg-green-50"
                     onClick={() => {
                       handleContactClick('whatsapp_click');
-                      window.open(`https://wa.me/38344000000?text=Jam i interesuar për: ${property.title}`, '_blank');
+                      const phone = ownerPhone ? ownerPhone.replace(/\D/g, '') : '';
+                      window.open(`https://wa.me/${phone}?text=Jam i interesuar për: ${property.title}`, '_blank');
                     }}
                   >
                     <MessageCircle className="w-4 h-4" />
