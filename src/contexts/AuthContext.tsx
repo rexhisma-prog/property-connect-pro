@@ -25,7 +25,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchOrCreateProfile = async (authUser: User) => {
     try {
-      // Try to fetch existing profile
       const { data } = await supabase
         .from('users')
         .select('*')
@@ -37,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Profile doesn't exist — create it (Google OAuth users)
+      // Profile missing — create it
       const { data: created } = await supabase
         .from('users')
         .insert({
@@ -54,16 +53,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (created) {
         setProfile(created as UserProfile);
       } else {
-        // Insert failed (conflict) — fetch again
-        const { data: existing } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', authUser.id)
-          .single();
+        // Try fetching again (conflict — already exists)
+        const { data: existing } = await supabase.from('users').select('*').eq('id', authUser.id).single();
         if (existing) setProfile(existing as UserProfile);
       }
     } catch {
-      // Silently fail — user can still use app, profile will be null
+      // fail silently
     }
   };
 
@@ -72,38 +67,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    let initialized = false;
+    let isMounted = true;
 
-    // Listen to auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    // Ongoing auth changes — do NOT await inside this callback
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!isMounted) return;
       setSession(session);
       setUser(session?.user ?? null);
-
-      if (session?.user) {
-        await fetchOrCreateProfile(session.user);
-      } else {
+      if (!session?.user) {
         setProfile(null);
-      }
-
-      // Only set loading false once
-      if (!initialized) {
-        initialized = true;
-        setLoading(false);
       } else {
-        setLoading(false);
+        // Use setTimeout to avoid deadlock (Supabase docs requirement)
+        setTimeout(() => {
+          if (isMounted) fetchOrCreateProfile(session.user);
+        }, 0);
       }
     });
 
-    // Get initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!session) {
-        // No session — stop loading immediately
-        setLoading(false);
+    // Initial load — controls the loading spinner
+    const init = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!isMounted) return;
+        setSession(session);
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          await fetchOrCreateProfile(session.user);
+        }
+      } finally {
+        if (isMounted) setLoading(false);
       }
-      // If session exists, onAuthStateChange will fire and handle it
-    });
+    };
 
-    return () => subscription.unsubscribe();
+    init();
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, fullName: string) => {
@@ -126,9 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/dashboard`,
-      },
+      options: { redirectTo: `${window.location.origin}/dashboard` },
     });
     return { error };
   };
