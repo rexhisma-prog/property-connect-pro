@@ -8,28 +8,39 @@ import { supabase } from '@/integrations/supabase/client';
 import { Property } from '@/lib/supabase-types';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Shield, Zap, CreditCard, TrendingUp } from 'lucide-react';
+import { ArrowRight, Instagram } from 'lucide-react';
+
+interface SocialPhoto {
+  id: string;
+  image_url: string;
+  caption: string | null;
+  link_url: string | null;
+  sort_order: number;
+}
 
 export default function Index() {
   const [featuredProperties, setFeaturedProperties] = useState<Property[]>([]);
   const [latestProperties, setLatestProperties] = useState<Property[]>([]);
+  const [socialPhotos, setSocialPhotos] = useState<SocialPhoto[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchProperties();
+    fetchAll();
   }, []);
 
-  const fetchProperties = async () => {
-    const [featured, latest] = await Promise.all([
+  const fetchAll = async () => {
+    const [featured, latest, photos] = await Promise.all([
       supabase.from('properties').select('*').eq('status', 'active').eq('is_featured', true)
         .gt('featured_until', new Date().toISOString()).order('created_at', { ascending: false }).limit(4),
       supabase.from('properties').select('*').eq('status', 'active')
         .order('last_boosted_at', { ascending: false, nullsFirst: false })
         .order('created_at', { ascending: false }).limit(8),
+      supabase.from('social_photos').select('*').eq('is_active', true).order('sort_order', { ascending: true }).limit(12),
     ]);
 
     setFeaturedProperties((featured.data as Property[]) || []);
     setLatestProperties((latest.data as Property[]) || []);
+    setSocialPhotos((photos.data as SocialPhoto[]) || []);
     setLoading(false);
   };
 
@@ -116,30 +127,55 @@ export default function Index() {
 
       {/* Placeholder: Banesat & Shtëpitë - do të shtohet më vonë */}
 
-      {/* Features */}
-      <section className="py-16 bg-foreground text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-3">Pse ShitëPronen.com?</h2>
-            <p className="text-white/60">Platforma e ndërtuar për tregun shqiptar të pronave</p>
-          </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { icon: Shield, title: 'I Sigurt', desc: 'Platforma e sigurt për blerës dhe shitës' },
-              { icon: Zap, title: 'I Shpejtë', desc: 'Postim pronë në 2 minuta' },
-              { icon: CreditCard, title: 'Çmime të Ulëta', desc: 'Nga €25 për postim' },
-              { icon: TrendingUp, title: 'Statistika', desc: 'Shikimet & kontaktet live' },
-            ].map(f => (
-              <div key={f.title} className="text-center">
-                <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center mx-auto mb-3">
-                  <f.icon className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="font-semibold text-white mb-1">{f.title}</h3>
-                <p className="text-white/50 text-sm">{f.desc}</p>
-              </div>
-            ))}
+
+      {/* Social Photos Gallery */}
+      <section className="py-12 max-w-7xl mx-auto px-4 sm:px-6 w-full">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="section-title flex items-center gap-2">
+              <Instagram className="w-5 h-5 text-primary" /> Galeria Jonë
+            </h2>
+            <p className="text-muted-foreground text-sm mt-1">Prona të zgjedhura nga rrjetet sociale</p>
           </div>
         </div>
+        {socialPhotos.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {socialPhotos.map(photo => (
+              photo.link_url ? (
+                <a key={photo.id} href={photo.link_url} target="_blank" rel="noopener noreferrer"
+                  className="group relative aspect-square overflow-hidden rounded-xl bg-secondary block">
+                  <img src={photo.image_url} alt={photo.caption || ''} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  {photo.caption && (
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-end">
+                      <p className="text-white text-xs p-3 opacity-0 group-hover:opacity-100 transition-opacity font-medium">{photo.caption}</p>
+                    </div>
+                  )}
+                </a>
+              ) : (
+                <div key={photo.id} className="group relative aspect-square overflow-hidden rounded-xl bg-secondary">
+                  <img src={photo.image_url} alt={photo.caption || ''} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  {photo.caption && (
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-end">
+                      <p className="text-white text-xs p-3 opacity-0 group-hover:opacity-100 transition-opacity font-medium">{photo.caption}</p>
+                    </div>
+                  )}
+                </div>
+              )
+            ))}
+          </div>
+        ) : !loading ? (
+          <div className="text-center py-16 bg-secondary/30 rounded-2xl border border-dashed border-border">
+            <Instagram className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+            <p className="text-muted-foreground text-sm">Fotografitë do të shfaqen këtu</p>
+            <p className="text-xs text-muted-foreground/60 mt-1">Shto foto nga paneli i adminit</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="aspect-square rounded-xl bg-secondary animate-pulse" />
+            ))}
+          </div>
+        )}
       </section>
 
       <Footer />
