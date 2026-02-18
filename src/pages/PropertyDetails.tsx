@@ -315,55 +315,74 @@ export default function PropertyDetails() {
               <div className="bg-card border border-border rounded-2xl p-5 sticky top-24 shadow-md">
                 <h3 className="font-semibold text-lg mb-4">Kontaktoni Shitësin</h3>
 
-                <div className="space-y-3">
-                  {/* Phone */}
-                  {showPhone && ownerPhone ? (
-                    <a href={`tel:${ownerPhone}`} className="block w-full">
-                      <Button className="w-full btn-orange gap-2">
-                        <Phone className="w-4 h-4" />
-                        {ownerPhone}
+                {!user ? (
+                  /* Not logged in - prompt to register */
+                  <div className="space-y-3">
+                    <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl text-center">
+                      <Phone className="w-8 h-8 text-primary mx-auto mb-2" />
+                      <p className="font-medium text-foreground text-sm mb-1">Kërkohet Llogaria</p>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        Regjistrohu me Gmail për të parë numrin e telefonit dhe kontaktuar pronarin.
+                      </p>
+                      <Button className="w-full btn-orange gap-2 mb-2" onClick={() => navigate('/register')}>
+                        Regjistrohu me Gmail
                       </Button>
-                    </a>
-                  ) : (
+                      <Button variant="outline" className="w-full text-sm" onClick={() => navigate('/login')}>
+                        Kam llogari — Hyr
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {/* Phone */}
+                    {showPhone && ownerPhone ? (
+                      <a href={`tel:${ownerPhone}`} className="block w-full">
+                        <Button className="w-full btn-orange gap-2">
+                          <Phone className="w-4 h-4" />
+                          {ownerPhone}
+                        </Button>
+                      </a>
+                    ) : (
+                      <Button
+                        className="w-full btn-orange gap-2"
+                        onClick={() => {
+                          setShowPhone(true);
+                          handleContactClick('phone_click');
+                        }}
+                      >
+                        <Phone className="w-4 h-4" />
+                        {ownerPhone ? 'Shiko Numrin' : 'Nuk ka numër'}
+                      </Button>
+                    )}
+
+                    {/* WhatsApp */}
                     <Button
-                      className="w-full btn-orange gap-2"
+                      variant="outline"
+                      className="w-full gap-2 border-green-600 text-green-700 hover:bg-green-50"
                       onClick={() => {
-                        setShowPhone(true);
-                        handleContactClick('phone_click');
+                        handleContactClick('whatsapp_click');
+                        const phone = ownerPhone ? ownerPhone.replace(/\D/g, '') : '';
+                        window.open(`https://wa.me/${phone}?text=Jam i interesuar për: ${encodeURIComponent(property.title)}`, '_blank');
                       }}
                     >
-                      <Phone className="w-4 h-4" />
-                      {ownerPhone ? 'Shiko Numrin' : 'Nuk ka numër'}
+                      <MessageCircle className="w-4 h-4" />
+                      WhatsApp
                     </Button>
-                  )}
 
-                  {/* WhatsApp */}
-                  <Button
-                    variant="outline"
-                    className="w-full gap-2 border-green-600 text-green-700 hover:bg-green-50"
-                    onClick={() => {
-                      handleContactClick('whatsapp_click');
-                      const phone = ownerPhone ? ownerPhone.replace(/\D/g, '') : '';
-                      window.open(`https://wa.me/${phone}?text=Jam i interesuar për: ${property.title}`, '_blank');
-                    }}
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    WhatsApp
-                  </Button>
-
-                  {/* Email */}
-                  <Button
-                    variant="outline"
-                    className="w-full gap-2"
-                    onClick={() => {
-                      handleContactClick('email_click');
-                      window.open(`mailto:?subject=Interesim për pronën: ${property.title}`, '_blank');
-                    }}
-                  >
-                    <Mail className="w-4 h-4" />
-                    Email
-                  </Button>
-                </div>
+                    {/* Email */}
+                    <Button
+                      variant="outline"
+                      className="w-full gap-2"
+                      onClick={() => {
+                        handleContactClick('email_click');
+                        window.open(`mailto:?subject=${encodeURIComponent('Interesim për pronën: ' + property.title)}`, '_blank');
+                      }}
+                    >
+                      <Mail className="w-4 h-4" />
+                      Email
+                    </Button>
+                  </div>
+                )}
 
                 <div className="mt-4 p-3 bg-secondary rounded-xl">
                   <p className="text-xs text-muted-foreground">
