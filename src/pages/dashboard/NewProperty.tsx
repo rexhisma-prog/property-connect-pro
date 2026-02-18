@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { CITIES } from '@/lib/supabase-types';
+import { CITIES_BY_COUNTRY } from '@/lib/supabase-types';
 import { Upload, X, Loader2, Info, FlaskConical } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -26,6 +26,7 @@ export default function NewProperty() {
     title: '',
     description: '',
     price: '',
+    country: 'kosovo',
     city: '',
     address: '',
     property_type: 'apartment',
@@ -140,6 +141,7 @@ export default function NewProperty() {
       has_flete_poseduese: form.has_flete_poseduese,
       is_parcele: form.is_parcele,
       has_leje_ndertimi: form.has_leje_ndertimi,
+      country: form.country,
     } as any).select().single();
 
     if (error) {
@@ -225,13 +227,23 @@ export default function NewProperty() {
             <h2 className="font-semibold text-foreground">Vendndodhja & Çmimi</h2>
             <div className="grid grid-cols-2 gap-4">
               <div>
+                <Label>Vendi <span className="text-destructive">*</span></Label>
+                <select value={form.country} onChange={e => { set('country', e.target.value); set('city', ''); }}
+                  className="w-full mt-1 px-3 py-2 border border-border rounded-lg bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                  <option value="kosovo">🇽🇰 Kosovë</option>
+                  <option value="albania">🇦🇱 Shqipëri</option>
+                </select>
+              </div>
+              <div>
                 <Label>Qyteti <span className="text-destructive">*</span></Label>
                 <select value={form.city} onChange={e => set('city', e.target.value)}
                   className="w-full mt-1 px-3 py-2 border border-border rounded-lg bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary" required>
                   <option value="">Zgjidhni qytetin</option>
-                  {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  {(CITIES_BY_COUNTRY[form.country as 'kosovo' | 'albania'] || []).map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="address">Adresa</Label>
                 <Input id="address" value={form.address} onChange={e => set('address', e.target.value)}

@@ -1,21 +1,30 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, MapPin, ChevronDown } from 'lucide-react';
+import { Search, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { CITIES } from '@/lib/supabase-types';
+import { CITIES_BY_COUNTRY, Country } from '@/lib/supabase-types';
 import heroBg from '@/assets/hero-bg.jpg';
 
 export default function HeroSection() {
   const navigate = useNavigate();
   const [listingType, setListingType] = useState<'shitje' | 'qira'>('shitje');
+  const [country, setCountry] = useState<Country | ''>('');
   const [city, setCity] = useState('');
   const [propertyType, setPropertyType] = useState('');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
 
+  const availableCities = country ? CITIES_BY_COUNTRY[country] : [...CITIES_BY_COUNTRY.kosovo, ...CITIES_BY_COUNTRY.albania];
+
+  const handleCountryChange = (c: Country | '') => {
+    setCountry(c);
+    setCity(''); // reset city when country changes
+  };
+
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (listingType) params.set('type', listingType);
+    if (country) params.set('country', country);
     if (city) params.set('city', city);
     if (propertyType) params.set('property_type', propertyType);
     if (minPrice) params.set('min_price', minPrice);
@@ -40,9 +49,31 @@ export default function HeroSection() {
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-4 leading-tight">
             Gjej Pronën e <span className="text-primary">Ëndrrave Tua</span>
           </h1>
-          <p className="text-lg text-white/80 mb-10 max-w-2xl mx-auto">
+          <p className="text-lg text-white/80 mb-6 max-w-2xl mx-auto">
             Mbi 10,000 prona të listuara. Blej, shit ose qiraje me besim dhe lehtësi.
           </p>
+        </div>
+
+        {/* Country Selector */}
+        <div className="flex items-center justify-center gap-3 mb-6 animate-fade-in-up" style={{ animationDelay: '0.05s' }}>
+          {[
+            { value: '' as const, label: '🌍 Të gjitha', desc: 'Kosovë & Shqipëri' },
+            { value: 'kosovo' as Country, label: '🇽🇰 Kosovë', desc: '' },
+            { value: 'albania' as Country, label: '🇦🇱 Shqipëri', desc: '' },
+          ].map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => handleCountryChange(opt.value)}
+              className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all border-2 ${
+                country === opt.value
+                  ? 'bg-primary border-primary text-white shadow-lg scale-105'
+                  : 'bg-white/15 backdrop-blur-sm border-white/30 text-white hover:bg-white/25 hover:border-white/50'
+              }`}
+            >
+              {opt.label}
+              {opt.desc && <span className="block text-xs font-normal opacity-75">{opt.desc}</span>}
+            </button>
+          ))}
         </div>
 
         {/* Search Card */}
@@ -82,7 +113,7 @@ export default function HeroSection() {
                 className="w-full pl-9 pr-3 py-2.5 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary appearance-none cursor-pointer"
               >
                 <option value="">Të gjitha qytetet</option>
-                {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
+                {availableCities.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
 

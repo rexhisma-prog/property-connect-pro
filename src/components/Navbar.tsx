@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -12,11 +12,26 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import logo from '@/assets/logo.png';
+import { Country } from '@/lib/supabase-types';
+
 
 export default function Navbar() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Extract country from current URL if on /properties
+  const searchParams = new URLSearchParams(location.search);
+  const currentCountry = location.pathname === '/properties' ? (searchParams.get('country') || '') : '';
+
+  const handleCountryClick = (country: Country | '') => {
+    const params = new URLSearchParams(location.search);
+    if (country) params.set('country', country);
+    else params.delete('country');
+    params.delete('city'); // reset city on country change
+    navigate(`/properties?${params.toString()}`);
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -37,6 +52,26 @@ export default function Navbar() {
             <Link to="/properties" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors">
               Prona
             </Link>
+            {/* Country quick-filter in navbar */}
+            <div className="flex items-center gap-0.5 ml-1 bg-secondary rounded-lg p-0.5">
+              {[
+                { value: '' as const, label: '🌍 Të gjitha' },
+                { value: 'kosovo' as Country, label: '🇽🇰 Kosovë' },
+                { value: 'albania' as Country, label: '🇦🇱 Shqipëri' },
+              ].map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => handleCountryClick(opt.value)}
+                  className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${
+                    currentCountry === opt.value
+                      ? 'bg-white text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
             <Link to="/pricing" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors">
               Çmimet
             </Link>
