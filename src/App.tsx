@@ -22,6 +22,7 @@ import MyProperties from "./pages/dashboard/MyProperties";
 import NewProperty from "./pages/dashboard/NewProperty";
 import BuyCredits from "./pages/dashboard/BuyCredits";
 import EditProperty from "./pages/dashboard/EditProperty";
+import Profile from "./pages/dashboard/Profile";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -58,6 +59,7 @@ const App = () => (
             <Route path="/dashboard/properties/new" element={<ProtectedRoute><NewProperty /></ProtectedRoute>} />
             <Route path="/dashboard/credits" element={<ProtectedRoute><BuyCredits /></ProtectedRoute>} />
             <Route path="/dashboard/properties/:id/edit" element={<ProtectedRoute><EditProperty /></ProtectedRoute>} />
+            <Route path="/dashboard/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
             {/* Admin */}
             <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
