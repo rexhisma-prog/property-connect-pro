@@ -414,6 +414,7 @@ export type Database = {
           description: string | null
           expires_at: string | null
           featured_until: string | null
+          has_pranim_teknik: boolean
           id: string
           images: string[] | null
           is_featured: boolean
@@ -441,6 +442,7 @@ export type Database = {
           description?: string | null
           expires_at?: string | null
           featured_until?: string | null
+          has_pranim_teknik?: boolean
           id?: string
           images?: string[] | null
           is_featured?: boolean
@@ -468,6 +470,7 @@ export type Database = {
           description?: string | null
           expires_at?: string | null
           featured_until?: string | null
+          has_pranim_teknik?: boolean
           id?: string
           images?: string[] | null
           is_featured?: boolean
