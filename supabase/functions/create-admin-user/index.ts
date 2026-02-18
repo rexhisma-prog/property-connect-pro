@@ -14,72 +14,39 @@ Deno.serve(async (req) => {
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
 
+  const ADMIN_ID = 'c504d6e1-93d0-4648-a27f-05f3ca048556';
   const email = 'rexh.isma@gmail.com';
   const password = 'Admin1234!';
 
-  // Create auth user
-  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-  });
+  // Directly update the password using the known user ID
+  const { data: updated, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+    ADMIN_ID,
+    { password, email_confirm: true }
+  );
 
-  if (authError && !authError.message.includes('already been registered')) {
-    return new Response(JSON.stringify({ error: authError.message }), {
+  if (updateError) {
+    return new Response(JSON.stringify({ error: updateError.message }), {
       status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
 
-  const userId = authData?.user?.id;
-
-  if (!userId) {
-    // User might already exist, find them
-    const { data: existing } = await supabaseAdmin.auth.admin.listUsers();
-    const found = existing?.users?.find(u => u.email === email);
-    if (!found) {
-      return new Response(JSON.stringify({ error: 'Could not find or create user' }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    // Update password for existing user
-    await supabaseAdmin.auth.admin.updateUserById(found.id, { password });
-
-    // Ensure public.users record exists
-    await supabaseAdmin.from('users').upsert({
-      id: found.id,
-      email,
-      full_name: 'Super Admin',
-      role: 'admin',
-      status: 'active',
-    }, { onConflict: 'id' });
-
-    // Ensure user_roles record
-    await supabaseAdmin.from('user_roles').upsert({
-      user_id: found.id,
-      role: 'admin',
-    }, { onConflict: 'user_id' });
-
-    return new Response(JSON.stringify({ success: true, message: 'Admin updated', id: found.id }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
-  }
-
-  // New user - create public records
+  // Ensure public.users is correct
   await supabaseAdmin.from('users').upsert({
-    id: userId,
-    email,
-    full_name: 'Super Admin',
-    role: 'admin',
-    status: 'active',
+    id: ADMIN_ID, email, full_name: 'Super Admin', role: 'admin', status: 'active',
   }, { onConflict: 'id' });
 
-  await supabaseAdmin.from('user_roles').upsert({
-    user_id: userId,
-    role: 'admin',
-  }, { onConflict: 'user_id' });
+  // Insert user_roles if not exists
+  const { data: existingRole } = await supabaseAdmin.from('user_roles').select('id').eq('user_id', ADMIN_ID).maybeSingle();
+  if (!existingRole) {
+    await supabaseAdmin.from('user_roles').insert({ user_id: ADMIN_ID, role: 'admin' });
+  }
 
-  return new Response(JSON.stringify({ success: true, message: 'Admin created', id: userId }), {
+  return new Response(JSON.stringify({
+    success: true,
+    message: 'Password updated successfully',
+    user_email: updated.user?.email,
+    confirmed: updated.user?.email_confirmed_at,
+  }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' }
   });
 });
