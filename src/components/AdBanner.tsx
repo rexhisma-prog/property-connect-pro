@@ -66,10 +66,10 @@ export default function AdBanner({ position, className = '' }: AdBannerProps) {
   const isSidebarCheck = position === 'sidebar' || position === 'property_details_sidebar';
 
   if (!ad) return (
-    <div className={`relative overflow-hidden rounded-xl border border-dashed border-border bg-secondary/20 flex items-center justify-center ${isSidebarCheck ? 'h-48' : 'h-28 sm:h-36'} ${className}`}>
+    <div className={`relative overflow-hidden rounded-xl border-2 border-orange-500 bg-orange-500 flex items-center justify-center ${isSidebarCheck ? 'h-48' : 'h-28 sm:h-36'} ${className}`}>
       <a href="/advertise" className="text-center group">
-        <p className="text-muted-foreground text-sm font-medium group-hover:text-primary transition-colors">📢 Reklamo Këtu</p>
-        <p className="text-muted-foreground/60 text-xs mt-1">Kliko për të mësuar më shumë</p>
+        <p className="text-white text-sm font-semibold group-hover:text-white/80 transition-colors">📢 Reklamo Këtu</p>
+        <p className="text-white/70 text-xs mt-1">Kliko për të mësuar më shumë</p>
       </a>
     </div>
   );
