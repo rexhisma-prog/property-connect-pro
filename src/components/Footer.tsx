@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
-import { Building2, Facebook, Instagram, Mail, Phone } from 'lucide-react';
+import { Facebook, Instagram, Mail, Phone } from 'lucide-react';
 import AdBanner from '@/components/AdBanner';
+import logo from '@/assets/logo.png';
 
 export default function Footer() {
   return (
@@ -14,14 +15,9 @@ export default function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-                <Building2 className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-bold">
-                shite<span className="text-primary">pronen</span>.com
-              </span>
-            </div>
+            <Link to="/" className="flex items-center mb-3">
+              <img src={logo} alt="ShitePronen.com" className="h-8 w-auto object-contain brightness-0 invert" />
+            </Link>
             <p className="text-xs text-white/50 leading-relaxed mb-3">
               Platforma #1 e pronave në Kosovë dhe Shqipëri.
             </p>
