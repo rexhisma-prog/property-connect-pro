@@ -19,8 +19,37 @@ export default function Profile() {
 
   const set = (key: string, value: string) => setForm(prev => ({ ...prev, [key]: value }));
 
+  const validatePhone = (phone: string): string | null => {
+    if (!phone) return null; // optional
+    // Remove spaces for validation
+    const clean = phone.replace(/\s/g, '');
+    // Must be 04x + 6 digits (9 digits total) e.g. 044123456
+    if (!/^04[4-9]\d{6}$/.test(clean)) {
+      return 'Numri duhet të jetë në formatin 04x + 6 shifra (p.sh. 044 123 456)';
+    }
+    // Reject all-same digits: 044111111, 044222222...
+    const digits = clean.slice(3);
+    if (/^(\d)\1{5}$/.test(digits)) {
+      return 'Numri nuk është valid (shifra të njëjta)';
+    }
+    // Reject repeating patterns like 121212, 313131, 123123
+    if (/^(\d{2})\1{2}$/.test(digits) || /^(\d{3})\1$/.test(digits)) {
+      return 'Numri nuk është valid (pattern i përsëritur)';
+    }
+    return null;
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (form.phone) {
+      const phoneError = validatePhone(form.phone);
+      if (phoneError) {
+        toast.error(phoneError);
+        return;
+      }
+    }
+
     setLoading(true);
 
     const { error } = await supabase
@@ -113,10 +142,12 @@ export default function Profile() {
                 id="phone"
                 value={form.phone}
                 onChange={e => set('phone', e.target.value)}
-                placeholder="+383 44 XXX XXX"
+                placeholder="044 123 456"
                 className="pl-9"
+                maxLength={12}
               />
             </div>
+            <p className="text-xs text-muted-foreground mt-1">Formati: 044 123 456 (04x + 6 shifra)</p>
           </div>
 
           <Button type="submit" disabled={loading} className="w-full btn-orange">
