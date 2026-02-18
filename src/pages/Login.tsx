@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { lovable } from '@/integrations/lovable/index';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,8 +31,10 @@ export default function Login() {
   };
 
   const handleGoogle = async () => {
-    const { error } = await signInWithGoogle();
-    if (error) toast.error('Gabim me Google: ' + (error as any).message);
+    const result = await lovable.auth.signInWithOAuth('google', {
+      redirect_uri: window.location.origin,
+    });
+    if (result?.error) toast.error('Gabim me Google: ' + (result.error as any).message);
   };
 
   return (
