@@ -44,11 +44,10 @@ export default function Login() {
       !window.location.hostname.includes('lovableproject.com');
 
     if (isCustomDomain) {
-      // Domain custom (cPanel) — supabase direkt me skipBrowserRedirect
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: window.location.origin,
           skipBrowserRedirect: true,
         },
       });
@@ -57,17 +56,9 @@ export default function Login() {
         return;
       }
       if (data?.url) {
-        // Lejo accounts.google.com dhe supabase endpoint
-        const oauthUrl = new URL(data.url);
-        const allowedHosts = ['accounts.google.com', 'daztdyskforqmcokwexv.supabase.co'];
-        if (!allowedHosts.some(h => oauthUrl.hostname === h)) {
-          toast.error('Gabim: URL e papritur - ' + oauthUrl.hostname);
-          return;
-        }
         window.location.href = data.url;
       }
     } else {
-      // Preview Lovable — rruga normale
       const result = await lovable.auth.signInWithOAuth('google', {
         redirect_uri: `${window.location.origin}/dashboard`,
       });
