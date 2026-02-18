@@ -7,7 +7,7 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
-import { Plus, Edit, Trash2, Eye, Star, Zap, ArchiveX, CheckCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Star, Zap, CheckCircle, Phone, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 function formatPrice(price: number) {
@@ -144,23 +144,27 @@ export default function MyProperties() {
                         <Badge variant={sc.variant} className="flex-shrink-0 text-xs">{sc.label}</Badge>
                       </div>
                       <p className="text-primary font-bold mt-1">{formatPrice(property.price)}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {property.city} · {property.views_count} shikime · {property.contacts_count} kontakte
-                      </p>
-                      <div className="flex items-center gap-1 mt-1">
+                      <p className="text-xs text-muted-foreground mt-0.5">{property.city}</p>
+
+                      {/* Stats row */}
+                      <div className="flex items-center gap-3 mt-2">
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-foreground bg-secondary border border-border rounded-lg px-2 py-1">
+                          <Eye className="w-3.5 h-3.5 text-primary" />
+                          {property.views_count} shikime
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-foreground bg-secondary border border-border rounded-lg px-2 py-1">
+                          <Phone className="w-3.5 h-3.5 text-primary" />
+                          {property.contacts_count} kontakte
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1 mt-1.5">
                         {property.status === 'active' ? (
                           <span className="inline-flex items-center gap-1 text-xs font-medium text-primary border border-primary/30 bg-primary/10 rounded-full px-2 py-0.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block" />
-                            Pranim Teknik: Po
+                            Aktive
                           </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground bg-secondary border border-border rounded-full px-2 py-0.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground inline-block" />
-                            Pranim Teknik: Jo
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1 mt-1.5">
+                        ) : null}
                         {property.is_featured && <span className="badge-featured text-xs flex items-center gap-1"><Star className="w-2.5 h-2.5" />Featured</span>}
                         {property.is_urgent && <span className="badge-urgent text-xs flex items-center gap-1"><Zap className="w-2.5 h-2.5" />Urgent</span>}
                       </div>
