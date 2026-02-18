@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { lovable } from '@/integrations/lovable/index';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,11 +24,18 @@ export default function Login() {
     const { error } = await signIn(email, password);
     if (error) {
       toast.error('Email ose fjalëkalim i gabuar');
+      setLoading(false);
+      return;
+    }
+    toast.success('Mirë se vini!');
+    // Fetch role to redirect properly
+    const { data: roleData } = await supabase.from('users').select('role').eq('email', email).single();
+    setLoading(false);
+    if (roleData?.role === 'admin') {
+      navigate('/admin');
     } else {
-      toast.success('Mirë se vini!');
       navigate('/dashboard');
     }
-    setLoading(false);
   };
 
   const handleGoogle = async () => {
