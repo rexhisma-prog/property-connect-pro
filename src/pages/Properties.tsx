@@ -99,7 +99,7 @@ export default function Properties() {
               className="text-xs border border-border rounded-lg px-3 py-1.5 bg-background focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">Të gjitha llojet</option>
-              <option value="apartment">Apartament</option>
+              <option value="apartment">Banesë</option>
               <option value="house">Shtëpi</option>
               <option value="land">Tokë</option>
               <option value="commercial">Lokal</option>

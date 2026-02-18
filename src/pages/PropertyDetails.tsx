@@ -228,7 +228,7 @@ export default function PropertyDetails() {
                         {property.listing_type === 'shitje' ? 'Shitje' : 'Me Qira'}
                       </Badge>
                       <Badge variant="outline" className="capitalize">
-                        {property.property_type === 'apartment' ? 'Apartament' : 
+                        {property.property_type === 'apartment' ? 'Banesë' : 
                          property.property_type === 'house' ? 'Shtëpi' :
                          property.property_type === 'land' ? 'Tokë' : 'Lokal'}
                       </Badge>

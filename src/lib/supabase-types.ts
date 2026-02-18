@@ -100,7 +100,7 @@ export const CITIES = [
 ];
 
 export const PROPERTY_TYPE_LABELS: Record<PropertyType, string> = {
-  apartment: 'Apartament',
+  apartment: 'Banesë',
   house: 'Shtëpi',
   land: 'Tokë',
   commercial: 'Lokal/Komercial'
