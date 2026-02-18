@@ -10,11 +10,15 @@ import { Button } from '@/components/ui/button';
 import { Search, MapPin, SlidersHorizontal, ChevronDown } from 'lucide-react';
 import { CITIES } from '@/lib/supabase-types';
 
+const PAGE_SIZE = 20;
+
 export default function Properties() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
 
   const [filters, setFilters] = useState({
     city: searchParams.get('city') || '',
@@ -26,14 +30,18 @@ export default function Properties() {
   });
 
   useEffect(() => {
-    fetchProperties();
+    setPage(1);
   }, [filters]);
+
+  useEffect(() => {
+    fetchProperties();
+  }, [filters, page]);
 
   const fetchProperties = async () => {
     setLoading(true);
     let query = supabase
       .from('properties')
-      .select('*')
+      .select('*', { count: 'exact' })
       .eq('status', 'active')
       .order('is_featured', { ascending: false })
       .order('last_boosted_at', { ascending: false, nullsFirst: false })
@@ -46,10 +54,14 @@ export default function Properties() {
     if (filters.max_price) query = query.lte('price', Number(filters.max_price));
     if (filters.bedrooms) query = query.gte('bedrooms', Number(filters.bedrooms));
 
-    const { data } = await query.limit(60);
+    const from = (page - 1) * PAGE_SIZE;
+    const { data, count } = await query.range(from, from + PAGE_SIZE - 1);
     setProperties((data as Property[]) || []);
+    setTotal(count || 0);
     setLoading(false);
   };
+
+  const totalPages = Math.ceil(total / PAGE_SIZE);
 
   const updateFilter = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -115,7 +127,7 @@ export default function Properties() {
             </button>
 
             <span className="ml-auto text-xs text-muted-foreground">
-              {loading ? 'Duke kërkuar...' : `${properties.length} prona`}
+              {loading ? 'Duke kërkuar...' : `${total} prona`}
             </span>
           </div>
 
@@ -189,6 +201,53 @@ export default function Properties() {
             {properties.map(property => (
               <PropertyCard key={property.id} property={property} />
             ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-8">
+            <button
+              onClick={() => { setPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+              disabled={page === 1}
+              className="px-4 py-2 text-sm font-medium rounded-lg border border-border bg-card text-foreground disabled:opacity-40 hover:bg-secondary transition-colors"
+            >
+              ← Para
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
+              .reduce<(number | string)[]>((acc, p, idx, arr) => {
+                if (idx > 0 && (p as number) - (arr[idx - 1] as number) > 1) acc.push('...');
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((p, i) =>
+                p === '...' ? (
+                  <span key={`ellipsis-${i}`} className="px-2 text-muted-foreground">…</span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => { setPage(p as number); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    className={`w-9 h-9 text-sm font-medium rounded-lg transition-colors ${
+                      page === p
+                        ? 'bg-primary text-primary-foreground'
+                        : 'border border-border bg-card text-foreground hover:bg-secondary'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                )
+              )
+            }
+
+            <button
+              onClick={() => { setPage(p => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+              disabled={page === totalPages}
+              className="px-4 py-2 text-sm font-medium rounded-lg border border-border bg-card text-foreground disabled:opacity-40 hover:bg-secondary transition-colors"
+            >
+              Pas →
+            </button>
           </div>
         )}
       </main>
