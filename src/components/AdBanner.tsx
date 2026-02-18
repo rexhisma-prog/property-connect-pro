@@ -65,11 +65,14 @@ export default function AdBanner({ position, className = '' }: AdBannerProps) {
 
   const isSidebarCheck = position === 'sidebar' || position === 'property_details_sidebar';
 
+  const adDimensions = isSidebarCheck ? '300 × 250 px' : '728 × 90 px';
+
   if (!ad) return (
     <div className={`relative overflow-hidden rounded-xl border-2 border-orange-500 bg-orange-500 flex items-center justify-center ${isSidebarCheck ? 'h-64' : 'h-44 sm:h-56'} ${className}`}>
       <a href="/advertise" className="text-center group">
         <p className="text-white text-xl font-bold group-hover:text-white/80 transition-colors">📢 Reklamo Këtu</p>
-        <p className="text-white/70 text-sm mt-2">Kliko për të mësuar më shumë</p>
+        <p className="text-white/80 text-sm mt-2 font-mono">{adDimensions}</p>
+        <p className="text-white/60 text-xs mt-1">Kliko për të mësuar më shumë</p>
       </a>
     </div>
   );
