@@ -293,17 +293,20 @@ export default function PropertyDetails() {
 
               {/* Badges ligjore — varësisht nga lloji i pronës */}
               <div className="flex flex-wrap items-center gap-2">
-                {/* Pranim Teknik — vetëm apartment/house me shitje */}
-                {(property.property_type === 'apartment' || property.property_type === 'house') && property.listing_type === 'shitje' && (
-                  (property as any).has_pranim_teknik ? (
-                    <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary border border-primary/30 bg-primary/10 rounded-full px-3 py-1">
-                      ✓ Ka Pranim Teknik
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground border border-border bg-secondary rounded-full px-3 py-1">
-                      ✗ Pa Pranim Teknik
-                    </span>
-                  )
+                {/* Pranim Teknik + Fletë Poseduese — apartment/house/commercial me shitje */}
+                {(property.property_type === 'apartment' || property.property_type === 'house' || property.property_type === 'commercial') && property.listing_type === 'shitje' && (
+                  <>
+                    {(property as any).has_pranim_teknik ? (
+                      <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary border border-primary/30 bg-primary/10 rounded-full px-3 py-1">✓ Ka Pranim Teknik</span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground border border-border bg-secondary rounded-full px-3 py-1">✗ Pa Pranim Teknik</span>
+                    )}
+                    {(property as any).has_flete_poseduese ? (
+                      <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary border border-primary/30 bg-primary/10 rounded-full px-3 py-1">✓ Ka Fletë Poseduese</span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground border border-border bg-secondary rounded-full px-3 py-1">✗ Pa Fletë Poseduese</span>
+                    )}
+                  </>
                 )}
 
                 {/* Tokë — parcelë dhe leje ndërtimi */}

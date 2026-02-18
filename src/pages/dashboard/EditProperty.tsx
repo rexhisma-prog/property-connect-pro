@@ -35,6 +35,7 @@ export default function EditProperty() {
     bathrooms: '',
     area_m2: '',
     has_pranim_teknik: false,
+    has_flete_poseduese: false,
     is_parcele: false,
     has_leje_ndertimi: false,
   });
@@ -70,6 +71,7 @@ export default function EditProperty() {
       bathrooms: data.bathrooms ? String(data.bathrooms) : '',
       area_m2: data.area_m2 ? String(data.area_m2) : '',
       has_pranim_teknik: (data as any).has_pranim_teknik ?? false,
+      has_flete_poseduese: (data as any).has_flete_poseduese ?? false,
       is_parcele: (data as any).is_parcele ?? false,
       has_leje_ndertimi: (data as any).has_leje_ndertimi ?? false,
     });
@@ -133,6 +135,7 @@ export default function EditProperty() {
       area_m2: form.area_m2 ? parseFloat(form.area_m2) : null,
       images,
       has_pranim_teknik: form.has_pranim_teknik,
+      has_flete_poseduese: form.has_flete_poseduese,
       is_parcele: form.is_parcele,
       has_leje_ndertimi: form.has_leje_ndertimi,
     } as any).eq('id', id!).eq('user_id', user!.id);
@@ -246,20 +249,28 @@ export default function EditProperty() {
                   placeholder="0" className="mt-1" min="0" />
               </div>
             </div>
-            {/* Pranim Teknik — vetëm për apartment/house me shitje */}
-            {(form.property_type === 'apartment' || form.property_type === 'house') && form.listing_type === 'shitje' && (
-              <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-border hover:bg-secondary transition-colors">
-                <input
-                  type="checkbox"
-                  checked={form.has_pranim_teknik}
-                  onChange={e => setForm(prev => ({ ...prev, has_pranim_teknik: e.target.checked }))}
-                  className="w-4 h-4 accent-primary rounded"
-                />
-                <div>
-                  <p className="font-medium text-sm text-foreground">Ka Pranim Teknik</p>
-                  <p className="text-xs text-muted-foreground">Prona posedon dokumentin e pranimit teknik</p>
-                </div>
-              </label>
+            {/* Apartment / Shtëpi / Lokal me shitje — pranim teknik + fletë poseduese */}
+            {(form.property_type === 'apartment' || form.property_type === 'house' || form.property_type === 'commercial') && form.listing_type === 'shitje' && (
+              <div className="space-y-2">
+                <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-border hover:bg-secondary transition-colors">
+                  <input type="checkbox" checked={form.has_pranim_teknik}
+                    onChange={e => setForm(prev => ({ ...prev, has_pranim_teknik: e.target.checked }))}
+                    className="w-4 h-4 accent-primary rounded" />
+                  <div>
+                    <p className="font-medium text-sm text-foreground">Ka Pranim Teknik</p>
+                    <p className="text-xs text-muted-foreground">Prona posedon dokumentin e pranimit teknik</p>
+                  </div>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-border hover:bg-secondary transition-colors">
+                  <input type="checkbox" checked={form.has_flete_poseduese}
+                    onChange={e => setForm(prev => ({ ...prev, has_flete_poseduese: e.target.checked }))}
+                    className="w-4 h-4 accent-primary rounded" />
+                  <div>
+                    <p className="font-medium text-sm text-foreground">Ka Fletë Poseduese</p>
+                    <p className="text-xs text-muted-foreground">Prona ka fletë poseduese të regjistruar</p>
+                  </div>
+                </label>
+              </div>
             )}
 
             {/* Tokë — parcelë dhe leje ndërtimi */}
