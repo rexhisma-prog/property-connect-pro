@@ -11,7 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { 
   MapPin, BedDouble, Bath, Maximize2, Eye, Phone, Mail, 
   MessageCircle, Star, Zap, ArrowLeft, Calendar, Share2,
-  Heart, ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, X, ZoomIn
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -26,8 +26,8 @@ export default function PropertyDetails() {
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentImage, setCurrentImage] = useState(0);
-  const [contactPhone, setContactPhone] = useState('');
   const [showPhone, setShowPhone] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -111,8 +111,16 @@ export default function PropertyDetails() {
                     <img
                       src={property.images[currentImage]}
                       alt={property.title}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover cursor-zoom-in"
+                      onClick={() => setLightboxOpen(true)}
                     />
+                    {/* Zoom hint */}
+                    <button
+                      onClick={() => setLightboxOpen(true)}
+                      className="absolute bottom-3 right-3 w-8 h-8 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center"
+                    >
+                      <ZoomIn className="w-4 h-4" />
+                    </button>
                     {property.images.length > 1 && (
                       <>
                         <button
@@ -149,6 +157,46 @@ export default function PropertyDetails() {
                   {isActiveUrgent && <span className="badge-urgent flex items-center gap-1"><Zap className="w-3 h-3" /> Urgent</span>}
                 </div>
               </div>
+
+              {/* Lightbox */}
+              {lightboxOpen && property.images && property.images.length > 0 && (
+                <div
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
+                  onClick={() => setLightboxOpen(false)}
+                >
+                  <button
+                    className="absolute top-4 right-4 w-10 h-10 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center"
+                    onClick={() => setLightboxOpen(false)}
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                  {property.images.length > 1 && (
+                    <>
+                      <button
+                        className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center"
+                        onClick={e => { e.stopPropagation(); setCurrentImage(i => (i - 1 + property.images.length) % property.images.length); }}
+                      >
+                        <ChevronLeft className="w-6 h-6" />
+                      </button>
+                      <button
+                        className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center"
+                        onClick={e => { e.stopPropagation(); setCurrentImage(i => (i + 1) % property.images.length); }}
+                      >
+                        <ChevronRight className="w-6 h-6" />
+                      </button>
+                    </>
+                  )}
+                  <img
+                    src={property.images[currentImage]}
+                    alt={property.title}
+                    className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg"
+                    onClick={e => e.stopPropagation()}
+                  />
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-sm">
+                    {currentImage + 1} / {property.images.length}
+                  </div>
+                </div>
+              )}
 
               {/* Thumbnails */}
               {property.images && property.images.length > 1 && (
