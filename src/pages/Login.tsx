@@ -44,18 +44,30 @@ export default function Login() {
       !window.location.hostname.includes('lovableproject.com');
 
     if (isCustomDomain) {
-      const result = await lovable.auth.signInWithOAuth('google', {
-        redirect_uri: `${window.location.origin}/dashboard`,
-        extraParams: { skipBrowserRedirect: 'true' } as any,
+      // Domain custom (cPanel) — supabase direkt me skipBrowserRedirect
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+          skipBrowserRedirect: true,
+        },
       });
-      if (result?.error) {
-        toast.error('Gabim me Google: ' + (result.error as any).message);
-      } else if ((result as any)?.url) {
-        window.location.href = (result as any).url;
-      } else if (!result?.redirected) {
-        navigate('/dashboard');
+      if (error) {
+        toast.error('Gabim me Google: ' + error.message);
+        return;
+      }
+      if (data?.url) {
+        // Lejo accounts.google.com dhe supabase endpoint
+        const oauthUrl = new URL(data.url);
+        const allowedHosts = ['accounts.google.com', 'daztdyskforqmcokwexv.supabase.co'];
+        if (!allowedHosts.some(h => oauthUrl.hostname === h)) {
+          toast.error('Gabim: URL e papritur - ' + oauthUrl.hostname);
+          return;
+        }
+        window.location.href = data.url;
       }
     } else {
+      // Preview Lovable — rruga normale
       const result = await lovable.auth.signInWithOAuth('google', {
         redirect_uri: `${window.location.origin}/dashboard`,
       });
