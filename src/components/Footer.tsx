@@ -32,7 +32,7 @@ export default function Footer() {
               <a href="#" className="w-7 h-7 rounded-lg bg-white/10 hover:bg-primary flex items-center justify-center transition-colors">
                 <Instagram className="w-3.5 h-3.5" />
               </a>
-              <a href="mailto:info@shitepronen.com" className="w-7 h-7 rounded-lg bg-white/10 hover:bg-primary flex items-center justify-center transition-colors">
+              <a href="mailto:marketing@shitepronen.com" className="w-7 h-7 rounded-lg bg-white/10 hover:bg-primary flex items-center justify-center transition-colors">
                 <Mail className="w-3.5 h-3.5" />
               </a>
             </div>
@@ -82,7 +82,7 @@ export default function Footer() {
             <ul className="space-y-2">
               <li className="flex items-center gap-1.5 text-xs text-white/55">
                 <Mail className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-                info@shitepronen.com
+                marketing@shitepronen.com
               </li>
               <li className="flex items-center gap-1.5 text-xs text-white/55">
                 <Phone className="w-3.5 h-3.5 text-primary flex-shrink-0" />
