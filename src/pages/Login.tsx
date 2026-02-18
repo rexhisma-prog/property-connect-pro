@@ -34,7 +34,12 @@ export default function Login() {
     const result = await lovable.auth.signInWithOAuth('google', {
       redirect_uri: `${window.location.origin}/dashboard`,
     });
-    if (result?.error) toast.error('Gabim me Google: ' + (result.error as any).message);
+    if (result?.error) {
+      toast.error('Gabim me Google: ' + (result.error as any).message);
+    } else if (!result?.redirected) {
+      // Session set directly (not via redirect), navigate manually
+      navigate('/dashboard');
+    }
   };
 
   return (
