@@ -16,7 +16,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center mb-3">
-              <img src={logo} alt="ShitePronen.com" className="h-8 w-auto object-contain brightness-0 invert" />
+              <img src={logo} alt="ShitePronen.com" className="h-8 w-auto object-contain" />
             </Link>
             <p className="text-xs text-white/50 leading-relaxed mb-3">
               Platforma #1 e pronave në Kosovë dhe Shqipëri.

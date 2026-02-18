@@ -29,7 +29,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center group">
-            <img src={logo} alt="ShitePronen.com" className="h-9 w-auto object-contain" />
+            <img src={logo} alt="ShitePronen.com" className="h-10 w-auto object-contain" />
           </Link>
 
           {/* Desktop Nav */}
