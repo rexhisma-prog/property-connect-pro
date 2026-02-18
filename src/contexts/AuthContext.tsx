@@ -23,58 +23,84 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = async (userId: string, authUser?: User) => {
-    const { data } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    if (data) {
-      setProfile(data as UserProfile);
-    } else if (authUser) {
-      // Upsert profile if missing (e.g. Google OAuth users)
-      const { data: newProfile } = await supabase
+  const fetchOrCreateProfile = async (authUser: User) => {
+    try {
+      // Try to fetch existing profile
+      const { data } = await supabase
         .from('users')
-        .upsert({
+        .select('*')
+        .eq('id', authUser.id)
+        .single();
+
+      if (data) {
+        setProfile(data as UserProfile);
+        return;
+      }
+
+      // Profile doesn't exist — create it (Google OAuth users)
+      const { data: created } = await supabase
+        .from('users')
+        .insert({
           id: authUser.id,
           email: authUser.email!,
           full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || authUser.email?.split('@')[0] || '',
           role: 'user',
           status: 'active',
           credits_remaining: 3,
-        }, { onConflict: 'id', ignoreDuplicates: true })
+        })
         .select()
         .single();
-      if (newProfile) setProfile(newProfile as UserProfile);
-      // Try fetching again in case upsert was ignored (user already existed)
-      else {
-        const { data: existing } = await supabase.from('users').select('*').eq('id', userId).single();
+
+      if (created) {
+        setProfile(created as UserProfile);
+      } else {
+        // Insert failed (conflict) — fetch again
+        const { data: existing } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', authUser.id)
+          .single();
         if (existing) setProfile(existing as UserProfile);
       }
+    } catch {
+      // Silently fail — user can still use app, profile will be null
     }
   };
 
   const refreshProfile = async () => {
-    if (user) await fetchProfile(user.id, user);
+    if (user) await fetchOrCreateProfile(user);
   };
 
   useEffect(() => {
+    let initialized = false;
+
+    // Listen to auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
+
       if (session?.user) {
-        await fetchProfile(session.user.id, session.user);
+        await fetchOrCreateProfile(session.user);
       } else {
         setProfile(null);
       }
-      setLoading(false);
+
+      // Only set loading false once
+      if (!initialized) {
+        initialized = true;
+        setLoading(false);
+      } else {
+        setLoading(false);
+      }
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) fetchProfile(session.user.id, session.user);
-      setLoading(false);
+    // Get initial session
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) {
+        // No session — stop loading immediately
+        setLoading(false);
+      }
+      // If session exists, onAuthStateChange will fire and handle it
     });
 
     return () => subscription.unsubscribe();
@@ -101,8 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/`,
-        skipBrowserRedirect: false,
+        redirectTo: `${window.location.origin}/dashboard`,
       },
     });
     return { error };
