@@ -63,9 +63,18 @@ export default function AdBanner({ position, className = '' }: AdBannerProps) {
     if (ad.link_url) window.open(ad.link_url, '_blank', 'noopener noreferrer');
   };
 
-  if (!ad) return null;
+  const isSidebarCheck = position === 'sidebar' || position === 'property_details_sidebar';
 
-  const isSidebar = position === 'sidebar' || position === 'property_details_sidebar';
+  if (!ad) return (
+    <div className={`relative overflow-hidden rounded-xl border border-dashed border-border bg-secondary/20 flex items-center justify-center ${isSidebarCheck ? 'h-48' : 'h-28 sm:h-36'} ${className}`}>
+      <a href="/advertise" className="text-center group">
+        <p className="text-muted-foreground text-sm font-medium group-hover:text-primary transition-colors">📢 Reklamo Këtu</p>
+        <p className="text-muted-foreground/60 text-xs mt-1">Kliko për të mësuar më shumë</p>
+      </a>
+    </div>
+  );
+
+  const isSidebar = isSidebarCheck;
 
   return (
     <div className={`relative group overflow-hidden rounded-xl border border-border bg-secondary/30 ${className}`}>
