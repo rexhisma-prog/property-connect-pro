@@ -114,45 +114,7 @@ export default function Index() {
         <AdBanner position="homepage_middle" className="w-full" />
       </div>
 
-      <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 w-full">
-        <div className="text-center mb-12">
-          <h2 className="section-title text-3xl">Si funksionon?</h2>
-          <p className="text-muted-foreground mt-2">3 hapa të thjeshtë për të shitur pronën tuaj</p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-          {[
-            {
-              icon: '👤',
-              step: '1',
-              title: 'Regjistrohu Falas',
-              desc: 'Krijoni llogarinë tuaj me email ose Google në pak sekonda.'
-            },
-            {
-              icon: '💳',
-              step: '2',
-              title: 'Blej Kredite',
-              desc: 'Zgjidhni paketën e krediteve që ju nevojitet. 1 kredit = 1 postim 90-ditor.'
-            },
-            {
-              icon: '🏠',
-              step: '3',
-              title: 'Posto & Shit',
-              desc: 'Listoni pronën me foto, përshkrim dhe çmim. Blerësit ju kontaktojnë direkt.'
-            },
-          ].map(item => (
-            <div key={item.step} className="text-center group">
-              <div className="w-16 h-16 bg-accent rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl group-hover:scale-110 transition-transform">
-                {item.icon}
-              </div>
-              <div className="inline-flex items-center justify-center w-6 h-6 bg-primary text-primary-foreground rounded-full text-xs font-bold mb-3">
-                {item.step}
-              </div>
-              <h3 className="font-semibold text-lg text-foreground mb-2">{item.title}</h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">{item.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* Placeholder: Banesat & Shtëpitë - do të shtohet më vonë */}
 
       {/* Features */}
       <section className="py-16 bg-foreground text-white">
@@ -177,24 +139,6 @@ export default function Index() {
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="py-16 max-w-4xl mx-auto px-4 sm:px-6 text-center w-full">
-        <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-          Gati të filloni?
-        </h2>
-        <p className="text-muted-foreground text-lg mb-8">
-          Regjistrohu falas dhe postoni pronën tuaj të parë sot.
-        </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Button size="lg" className="btn-orange px-8" asChild>
-            <Link to="/register">Regjistrohu Falas</Link>
-          </Button>
-          <Button size="lg" variant="outline" asChild>
-            <Link to="/properties">Shiko Pronat</Link>
-          </Button>
         </div>
       </section>
 
