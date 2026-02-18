@@ -147,6 +147,19 @@ export default function MyProperties() {
                       <p className="text-xs text-muted-foreground mt-0.5">
                         {property.city} · {property.views_count} shikime · {property.contacts_count} kontakte
                       </p>
+                      <div className="flex items-center gap-1 mt-1">
+                        {property.status === 'active' ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-medium text-primary border border-primary/30 bg-primary/10 rounded-full px-2 py-0.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block" />
+                            Pranim Teknik: Po
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground bg-secondary border border-border rounded-full px-2 py-0.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground inline-block" />
+                            Pranim Teknik: Jo
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-1 mt-1.5">
                         {property.is_featured && <span className="badge-featured text-xs flex items-center gap-1"><Star className="w-2.5 h-2.5" />Featured</span>}
                         {property.is_urgent && <span className="badge-urgent text-xs flex items-center gap-1"><Zap className="w-2.5 h-2.5" />Urgent</span>}
