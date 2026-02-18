@@ -44,29 +44,18 @@ export default function Login() {
       !window.location.hostname.includes('lovableproject.com');
 
     if (isCustomDomain) {
-      // Custom domain (cPanel etc.) — bypass auth-bridge
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`,
-          skipBrowserRedirect: true,
-        },
+      const result = await lovable.auth.signInWithOAuth('google', {
+        redirect_uri: `${window.location.origin}/dashboard`,
+        extraParams: { skipBrowserRedirect: 'true' } as any,
       });
-      if (error) {
-        toast.error('Gabim me Google: ' + error.message);
-        return;
-      }
-      if (data?.url) {
-        const oauthUrl = new URL(data.url);
-        const allowedHosts = ['accounts.google.com'];
-        if (!allowedHosts.some(h => oauthUrl.hostname === h)) {
-          toast.error('URL OAuth e pavlefshme');
-          return;
-        }
-        window.location.href = data.url;
+      if (result?.error) {
+        toast.error('Gabim me Google: ' + (result.error as any).message);
+      } else if ((result as any)?.url) {
+        window.location.href = (result as any).url;
+      } else if (!result?.redirected) {
+        navigate('/dashboard');
       }
     } else {
-      // Lovable preview — përdor rrugën normale
       const result = await lovable.auth.signInWithOAuth('google', {
         redirect_uri: `${window.location.origin}/dashboard`,
       });
