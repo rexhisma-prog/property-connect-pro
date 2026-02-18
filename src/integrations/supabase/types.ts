@@ -409,6 +409,7 @@ export type Database = {
           bedrooms: number | null
           city: string
           contacts_count: number
+          country: string
           created_at: string
           currency: string
           description: string | null
@@ -440,6 +441,7 @@ export type Database = {
           bedrooms?: number | null
           city: string
           contacts_count?: number
+          country?: string
           created_at?: string
           currency?: string
           description?: string | null
@@ -471,6 +473,7 @@ export type Database = {
           bedrooms?: number | null
           city?: string
           contacts_count?: number
+          country?: string
           created_at?: string
           currency?: string
           description?: string | null

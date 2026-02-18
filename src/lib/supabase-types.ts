@@ -90,14 +90,28 @@ export interface Ad {
   created_at: string;
 }
 
-export const CITIES = [
-  'Prishtinë', 'Prizren', 'Pejë', 'Gjakovë', 'Mitrovicë',
-  'Ferizaj', 'Gjilan', 'Vushtrri', 'Lipjan', 'Suharekë',
-  'Rahovec', 'Malishevë', 'Skënderaj', 'Istog', 'Klinë',
-  'Drenas', 'Shtime', 'Kaçanik', 'Shtërpcë', 'Novobërdë',
-  'Tiranë', 'Durrës', 'Vlorë', 'Shkodër', 'Elbasan',
-  'Fier', 'Korçë', 'Berat', 'Lushnjë', 'Kavajë'
-];
+export type Country = 'kosovo' | 'albania';
+
+export const CITIES_BY_COUNTRY: Record<Country, string[]> = {
+  kosovo: [
+    'Prishtinë', 'Prizren', 'Pejë', 'Gjakovë', 'Mitrovicë',
+    'Ferizaj', 'Gjilan', 'Vushtrri', 'Lipjan', 'Suharekë',
+    'Rahovec', 'Malishevë', 'Skënderaj', 'Istog', 'Klinë',
+    'Drenas', 'Shtime', 'Kaçanik', 'Shtërpcë', 'Novobërdë',
+  ],
+  albania: [
+    'Tiranë', 'Durrës', 'Vlorë', 'Shkodër', 'Elbasan',
+    'Fier', 'Korçë', 'Berat', 'Lushnjë', 'Kavajë',
+    'Sarandë', 'Gjirokastër', 'Pogradec', 'Lezhë',
+  ],
+};
+
+export const CITIES = [...CITIES_BY_COUNTRY.kosovo, ...CITIES_BY_COUNTRY.albania];
+
+export const COUNTRY_LABELS: Record<Country, string> = {
+  kosovo: '🇽🇰 Kosovë',
+  albania: '🇦🇱 Shqipëri',
+};
 
 export const PROPERTY_TYPE_LABELS: Record<PropertyType, string> = {
   apartment: 'Banesë',

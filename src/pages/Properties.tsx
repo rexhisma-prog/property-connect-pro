@@ -2,13 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import AdBanner from '@/components/AdBanner';
 import { supabase } from '@/integrations/supabase/client';
-import { Property } from '@/lib/supabase-types';
+import { Property, CITIES_BY_COUNTRY, Country } from '@/lib/supabase-types';
 import PropertyCard from '@/components/PropertyCard';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import { Search, MapPin, SlidersHorizontal, ChevronDown } from 'lucide-react';
-import { CITIES } from '@/lib/supabase-types';
+import { Search, MapPin, SlidersHorizontal } from 'lucide-react';
 
 const PAGE_SIZE = 20;
 
@@ -21,6 +20,7 @@ export default function Properties() {
   const [total, setTotal] = useState(0);
 
   const [filters, setFilters] = useState({
+    country: (searchParams.get('country') || '') as Country | '',
     city: searchParams.get('city') || '',
     listing_type: searchParams.get('type') || '',
     property_type: searchParams.get('property_type') || '',
@@ -28,6 +28,11 @@ export default function Properties() {
     max_price: searchParams.get('max_price') || '',
     bedrooms: '',
   });
+
+  const availableCities = filters.country
+    ? CITIES_BY_COUNTRY[filters.country]
+    : [...CITIES_BY_COUNTRY.kosovo, ...CITIES_BY_COUNTRY.albania];
+
 
   useEffect(() => {
     setPage(1);
@@ -47,6 +52,7 @@ export default function Properties() {
       .order('last_boosted_at', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false });
 
+    if (filters.country) query = (query as any).eq('country', filters.country);
     if (filters.city) query = query.eq('city', filters.city);
     if (filters.listing_type) query = query.eq('listing_type', filters.listing_type as any);
     if (filters.property_type) query = query.eq('property_type', filters.property_type as any);
@@ -92,6 +98,27 @@ export default function Properties() {
               ))}
             </div>
 
+            {/* Country selector */}
+            <div className="flex gap-1.5">
+              {[
+                { value: '', label: '🌍 Të gjitha' },
+                { value: 'kosovo', label: '🇽🇰 Kosovë' },
+                { value: 'albania', label: '🇦🇱 Shqipëri' },
+              ].map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => { updateFilter('country', opt.value); updateFilter('city', ''); }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    filters.country === opt.value
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-secondary text-muted-foreground hover:bg-border'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
             <div className="h-5 w-px bg-border" />
 
             {/* City select */}
@@ -101,7 +128,7 @@ export default function Properties() {
               className="text-xs border border-border rounded-lg px-3 py-1.5 bg-background focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">Të gjitha qytetet</option>
-              {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
+              {availableCities.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
 
             {/* Property type */}
@@ -160,7 +187,7 @@ export default function Properties() {
                 <option value="4">4+ dhoma</option>
               </select>
               <button
-                onClick={() => setFilters({ city: '', listing_type: '', property_type: '', min_price: '', max_price: '', bedrooms: '' })}
+                onClick={() => setFilters({ country: '', city: '', listing_type: '', property_type: '', min_price: '', max_price: '', bedrooms: '' })}
                 className="text-xs text-destructive hover:underline"
               >
                 Pastro filtrat
