@@ -11,7 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { 
   MapPin, BedDouble, Bath, Maximize2, Eye, Phone, Mail, 
   MessageCircle, Star, Zap, ArrowLeft, Calendar, Share2,
-  ChevronLeft, ChevronRight, X, ZoomIn
+  ChevronLeft, ChevronRight, X
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -104,118 +104,151 @@ export default function PropertyDetails() {
 
       <main className="flex-1">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-          {/* Breadcrumb */}
-          <button onClick={() => navigate('/properties')} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">
-            <ArrowLeft className="w-4 h-4" /> Kthehu te lista
-          </button>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Left: Images + Details */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Image Gallery */}
-              <div className="relative rounded-2xl overflow-hidden bg-secondary h-[400px]">
-                {property.images && property.images.length > 0 ? (
-                  <>
+              {/* Image Gallery — Hero + Thumbnail Strip */}
+              {property.images && property.images.length > 0 ? (
+                <div className="space-y-2">
+                  {/* Hero Image */}
+                  <div className="relative rounded-2xl overflow-hidden bg-secondary h-[420px] sm:h-[500px] cursor-pointer group"
+                    onClick={() => setLightboxOpen(true)}
+                  >
                     <img
                       src={property.images[currentImage]}
                       alt={property.title}
-                      className="w-full h-full object-cover cursor-zoom-in"
-                      onClick={() => setLightboxOpen(true)}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
                     />
-                    {/* Zoom hint */}
-                    <button
-                      onClick={() => setLightboxOpen(true)}
-                      className="absolute bottom-3 right-3 w-8 h-8 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center"
-                    >
-                      <ZoomIn className="w-4 h-4" />
-                    </button>
+
+                    {/* Top bar: back + share */}
+                    <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
+                      <button
+                        onClick={e => { e.stopPropagation(); navigate('/properties'); }}
+                        className="w-9 h-9 bg-black/40 backdrop-blur-sm hover:bg-black/60 text-white rounded-full flex items-center justify-center transition-colors"
+                      >
+                        <ArrowLeft className="w-4 h-4" />
+                      </button>
+                      <div className="flex gap-2">
+                        {isActiveFeatured && <span className="badge-featured flex items-center gap-1"><Star className="w-3 h-3" /> Featured</span>}
+                        {isActiveUrgent && <span className="badge-urgent flex items-center gap-1"><Zap className="w-3 h-3" /> Urgent</span>}
+                      </div>
+                      <button
+                        onClick={e => { e.stopPropagation(); navigator.clipboard.writeText(window.location.href); toast.success('Linku u kopjua!'); }}
+                        className="w-9 h-9 bg-black/40 backdrop-blur-sm hover:bg-black/60 text-white rounded-full flex items-center justify-center transition-colors"
+                      >
+                        <Share2 className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Nav arrows */}
                     {property.images.length > 1 && (
                       <>
                         <button
-                          onClick={() => setCurrentImage(i => (i - 1 + property.images.length) % property.images.length)}
-                          className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center"
+                          onClick={e => { e.stopPropagation(); setCurrentImage(i => (i - 1 + property.images!.length) % property.images!.length); }}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-black/40 backdrop-blur-sm hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-colors"
                         >
-                          <ChevronLeft className="w-4 h-4" />
+                          <ChevronLeft className="w-5 h-5" />
                         </button>
                         <button
-                          onClick={() => setCurrentImage(i => (i + 1) % property.images.length)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center"
+                          onClick={e => { e.stopPropagation(); setCurrentImage(i => (i + 1) % property.images!.length); }}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-black/40 backdrop-blur-sm hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-colors"
                         >
-                          <ChevronRight className="w-4 h-4" />
+                          <ChevronRight className="w-5 h-5" />
                         </button>
-                        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-                          {property.images.map((_, i) => (
-                            <button key={i} onClick={() => setCurrentImage(i)}
-                              className={`w-2 h-2 rounded-full transition-all ${i === currentImage ? 'bg-white w-4' : 'bg-white/50'}`}
-                            />
-                          ))}
-                        </div>
                       </>
                     )}
-                  </>
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-7xl">🏠</span>
-                  </div>
-                )}
 
-                {/* Badges */}
-                <div className="absolute top-4 left-4 flex gap-2">
-                  {isActiveFeatured && <span className="badge-featured flex items-center gap-1"><Star className="w-3 h-3" /> Featured</span>}
-                  {isActiveUrgent && <span className="badge-urgent flex items-center gap-1"><Zap className="w-3 h-3" /> Urgent</span>}
+                    {/* Counter pill */}
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full font-medium">
+                      {currentImage + 1} / {property.images.length}
+                    </div>
+                  </div>
+
+                  {/* Thumbnail Strip */}
+                  {property.images.length > 1 && (
+                    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                      {property.images.slice(0, 5).map((img, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setCurrentImage(i)}
+                          className={`relative flex-shrink-0 w-20 h-16 sm:w-24 sm:h-20 rounded-xl overflow-hidden border-2 transition-all ${i === currentImage ? 'border-primary scale-[1.03]' : 'border-transparent opacity-70 hover:opacity-100'}`}
+                        >
+                          <img src={img} alt="" className="w-full h-full object-cover" />
+                          {/* "+N more" overlay on last visible thumb */}
+                          {i === 4 && property.images!.length > 5 && (
+                            <div
+                              onClick={e => { e.stopPropagation(); setLightboxOpen(true); }}
+                              className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-sm font-bold"
+                            >
+                              +{property.images!.length - 5}
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </div>
+              ) : (
+                <div className="relative rounded-2xl overflow-hidden bg-secondary h-[420px] flex items-center justify-center">
+                  <span className="text-7xl">🏠</span>
+                </div>
+              )}
 
               {/* Lightbox */}
               {lightboxOpen && property.images && property.images.length > 0 && (
                 <div
-                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
+                  className="fixed inset-0 z-50 flex flex-col bg-black"
                   onClick={() => setLightboxOpen(false)}
                 >
-                  <button
-                    className="absolute top-4 right-4 w-10 h-10 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center"
-                    onClick={() => setLightboxOpen(false)}
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                  {property.images.length > 1 && (
-                    <>
-                      <button
-                        className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center"
-                        onClick={e => { e.stopPropagation(); setCurrentImage(i => (i - 1 + property.images.length) % property.images.length); }}
-                      >
-                        <ChevronLeft className="w-6 h-6" />
-                      </button>
-                      <button
-                        className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center"
-                        onClick={e => { e.stopPropagation(); setCurrentImage(i => (i + 1) % property.images.length); }}
-                      >
-                        <ChevronRight className="w-6 h-6" />
-                      </button>
-                    </>
-                  )}
-                  <img
-                    src={property.images[currentImage]}
-                    alt={property.title}
-                    className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg"
-                    onClick={e => e.stopPropagation()}
-                  />
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-sm">
-                    {currentImage + 1} / {property.images.length}
-                  </div>
-                </div>
-              )}
-
-              {/* Thumbnails */}
-              {property.images && property.images.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto pb-1">
-                  {property.images.map((img, i) => (
-                    <button key={i} onClick={() => setCurrentImage(i)}
-                      className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${i === currentImage ? 'border-primary' : 'border-transparent'}`}
+                  {/* Lightbox header */}
+                  <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                    <span className="text-white/70 text-sm font-medium">{currentImage + 1} / {property.images.length}</span>
+                    <button
+                      className="w-9 h-9 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center"
+                      onClick={() => setLightboxOpen(false)}
                     >
-                      <img src={img} alt="" className="w-full h-full object-cover" />
+                      <X className="w-5 h-5" />
                     </button>
-                  ))}
+                  </div>
+
+                  {/* Main image */}
+                  <div className="flex-1 flex items-center justify-center relative" onClick={e => e.stopPropagation()}>
+                    {property.images.length > 1 && (
+                      <>
+                        <button
+                          className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center z-10"
+                          onClick={() => setCurrentImage(i => (i - 1 + property.images!.length) % property.images!.length)}
+                        >
+                          <ChevronLeft className="w-6 h-6" />
+                        </button>
+                        <button
+                          className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center z-10"
+                          onClick={() => setCurrentImage(i => (i + 1) % property.images!.length)}
+                        >
+                          <ChevronRight className="w-6 h-6" />
+                        </button>
+                      </>
+                    )}
+                    <img
+                      src={property.images[currentImage]}
+                      alt={property.title}
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
+
+                  {/* Lightbox thumbnail strip */}
+                  {property.images.length > 1 && (
+                    <div className="flex gap-2 overflow-x-auto px-4 py-3 flex-shrink-0 scrollbar-hide" onClick={e => e.stopPropagation()}>
+                      {property.images.map((img, i) => (
+                        <button key={i} onClick={() => setCurrentImage(i)}
+                          className={`flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${i === currentImage ? 'border-primary' : 'border-white/20 opacity-60 hover:opacity-100'}`}
+                        >
+                          <img src={img} alt="" className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
