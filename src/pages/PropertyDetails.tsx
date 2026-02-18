@@ -291,16 +291,43 @@ export default function PropertyDetails() {
                 </div>
               </div>
 
-              {/* Pranim Teknik badge */}
-              <div className="flex items-center gap-2">
-                {(property as any).has_pranim_teknik ? (
-                  <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary border border-primary/30 bg-primary/10 rounded-full px-3 py-1">
-                    ✓ Ka Pranim Teknik
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground border border-border bg-secondary rounded-full px-3 py-1">
-                    ✗ Pa Pranim Teknik
-                  </span>
+              {/* Badges ligjore — varësisht nga lloji i pronës */}
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Pranim Teknik — vetëm apartment/house me shitje */}
+                {(property.property_type === 'apartment' || property.property_type === 'house') && property.listing_type === 'shitje' && (
+                  (property as any).has_pranim_teknik ? (
+                    <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary border border-primary/30 bg-primary/10 rounded-full px-3 py-1">
+                      ✓ Ka Pranim Teknik
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground border border-border bg-secondary rounded-full px-3 py-1">
+                      ✗ Pa Pranim Teknik
+                    </span>
+                  )
+                )}
+
+                {/* Tokë — parcelë dhe leje ndërtimi */}
+                {property.property_type === 'land' && (
+                  <>
+                    {(property as any).is_parcele ? (
+                      <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary border border-primary/30 bg-primary/10 rounded-full px-3 py-1">
+                        ✓ E listuar si Parcelë
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground border border-border bg-secondary rounded-full px-3 py-1">
+                        ✗ Pa Regjistrim Parcele
+                      </span>
+                    )}
+                    {(property as any).has_leje_ndertimi ? (
+                      <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary border border-primary/30 bg-primary/10 rounded-full px-3 py-1">
+                        ✓ Ka Leje Ndërtimi
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground border border-border bg-secondary rounded-full px-3 py-1">
+                        ✗ Pa Leje Ndërtimi
+                      </span>
+                    )}
+                  </>
                 )}
               </div>
 
