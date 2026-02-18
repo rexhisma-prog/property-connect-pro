@@ -35,6 +35,8 @@ export default function EditProperty() {
     bathrooms: '',
     area_m2: '',
     has_pranim_teknik: false,
+    is_parcele: false,
+    has_leje_ndertimi: false,
   });
 
   useEffect(() => {
@@ -68,6 +70,8 @@ export default function EditProperty() {
       bathrooms: data.bathrooms ? String(data.bathrooms) : '',
       area_m2: data.area_m2 ? String(data.area_m2) : '',
       has_pranim_teknik: (data as any).has_pranim_teknik ?? false,
+      is_parcele: (data as any).is_parcele ?? false,
+      has_leje_ndertimi: (data as any).has_leje_ndertimi ?? false,
     });
     setImages(data.images || []);
     setFetching(false);
@@ -129,6 +133,8 @@ export default function EditProperty() {
       area_m2: form.area_m2 ? parseFloat(form.area_m2) : null,
       images,
       has_pranim_teknik: form.has_pranim_teknik,
+      is_parcele: form.is_parcele,
+      has_leje_ndertimi: form.has_leje_ndertimi,
     } as any).eq('id', id!).eq('user_id', user!.id);
 
     if (error) {
@@ -240,19 +246,51 @@ export default function EditProperty() {
                   placeholder="0" className="mt-1" min="0" />
               </div>
             </div>
-            {/* Pranim Teknik */}
-            <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-border hover:bg-secondary transition-colors">
-              <input
-                type="checkbox"
-                checked={form.has_pranim_teknik}
-                onChange={e => setForm(prev => ({ ...prev, has_pranim_teknik: e.target.checked }))}
-                className="w-4 h-4 accent-primary rounded"
-              />
-              <div>
-                <p className="font-medium text-sm text-foreground">Ka Pranim Teknik</p>
-                <p className="text-xs text-muted-foreground">Prona posedon dokumentin e pranimit teknik</p>
+            {/* Pranim Teknik — vetëm për apartment/house me shitje */}
+            {(form.property_type === 'apartment' || form.property_type === 'house') && form.listing_type === 'shitje' && (
+              <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-border hover:bg-secondary transition-colors">
+                <input
+                  type="checkbox"
+                  checked={form.has_pranim_teknik}
+                  onChange={e => setForm(prev => ({ ...prev, has_pranim_teknik: e.target.checked }))}
+                  className="w-4 h-4 accent-primary rounded"
+                />
+                <div>
+                  <p className="font-medium text-sm text-foreground">Ka Pranim Teknik</p>
+                  <p className="text-xs text-muted-foreground">Prona posedon dokumentin e pranimit teknik</p>
+                </div>
+              </label>
+            )}
+
+            {/* Tokë — parcelë dhe leje ndërtimi */}
+            {form.property_type === 'land' && (
+              <div className="space-y-2">
+                <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-border hover:bg-secondary transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={form.is_parcele}
+                    onChange={e => setForm(prev => ({ ...prev, is_parcele: e.target.checked }))}
+                    className="w-4 h-4 accent-primary rounded"
+                  />
+                  <div>
+                    <p className="font-medium text-sm text-foreground">E listuar si Parcelë</p>
+                    <p className="text-xs text-muted-foreground">Toka është e regjistruar zyrtarisht si parcelë</p>
+                  </div>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-border hover:bg-secondary transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={form.has_leje_ndertimi}
+                    onChange={e => setForm(prev => ({ ...prev, has_leje_ndertimi: e.target.checked }))}
+                    className="w-4 h-4 accent-primary rounded"
+                  />
+                  <div>
+                    <p className="font-medium text-sm text-foreground">Ka Leje Ndërtimi</p>
+                    <p className="text-xs text-muted-foreground">Parcela ka leje ndërtimi të lëshuar</p>
+                  </div>
+                </label>
               </div>
-            </label>
+            )}
           </div>
 
           <div className="bg-card border border-border rounded-2xl p-6 space-y-4">

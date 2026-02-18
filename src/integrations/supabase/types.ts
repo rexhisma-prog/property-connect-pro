@@ -414,10 +414,12 @@ export type Database = {
           description: string | null
           expires_at: string | null
           featured_until: string | null
+          has_leje_ndertimi: boolean
           has_pranim_teknik: boolean
           id: string
           images: string[] | null
           is_featured: boolean
+          is_parcele: boolean
           is_urgent: boolean
           last_boosted_at: string | null
           listing_type: Database["public"]["Enums"]["listing_type"]
@@ -442,10 +444,12 @@ export type Database = {
           description?: string | null
           expires_at?: string | null
           featured_until?: string | null
+          has_leje_ndertimi?: boolean
           has_pranim_teknik?: boolean
           id?: string
           images?: string[] | null
           is_featured?: boolean
+          is_parcele?: boolean
           is_urgent?: boolean
           last_boosted_at?: string | null
           listing_type: Database["public"]["Enums"]["listing_type"]
@@ -470,10 +474,12 @@ export type Database = {
           description?: string | null
           expires_at?: string | null
           featured_until?: string | null
+          has_leje_ndertimi?: boolean
           has_pranim_teknik?: boolean
           id?: string
           images?: string[] | null
           is_featured?: boolean
+          is_parcele?: boolean
           is_urgent?: boolean
           last_boosted_at?: string | null
           listing_type?: Database["public"]["Enums"]["listing_type"]
