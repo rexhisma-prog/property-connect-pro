@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import AdBanner from '@/components/AdBanner';
 import { supabase } from '@/integrations/supabase/client';
 import { Property } from '@/lib/supabase-types';
 import PropertyCard from '@/components/PropertyCard';
@@ -155,6 +156,11 @@ export default function Properties() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Banner: Property List Top */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 w-full pt-4">
+        <AdBanner position="property_list_top" className="w-full" />
       </div>
 
       {/* Property Grid */}

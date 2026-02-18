@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import AdBanner from '@/components/AdBanner';
 import { supabase } from '@/integrations/supabase/client';
 import { Property } from '@/lib/supabase-types';
 import Navbar from '@/components/Navbar';
@@ -252,8 +253,9 @@ export default function PropertyDetails() {
               </div>
             </div>
 
-            {/* Right: Contact Card */}
+            {/* Right: Contact Card + Sidebar Ad */}
             <div className="space-y-4">
+              <AdBanner position="property_details_sidebar" className="w-full" />
               <div className="bg-card border border-border rounded-2xl p-5 sticky top-24 shadow-md">
                 <h3 className="font-semibold text-lg mb-4">Kontaktoni Shitësin</h3>
 

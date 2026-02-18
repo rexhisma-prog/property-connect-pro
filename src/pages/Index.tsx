@@ -1,6 +1,7 @@
 import HeroSection from '@/components/HeroSection';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import AdBanner from '@/components/AdBanner';
 import PropertyCard from '@/components/PropertyCard';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -38,6 +39,11 @@ export default function Index() {
 
       {/* Hero */}
       <HeroSection />
+
+      {/* Banner: Homepage Top */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 w-full pt-6">
+        <AdBanner position="homepage_top" className="w-full" />
+      </div>
 
       {/* Featured */}
       {(featuredProperties.length > 0 || loading) && (
@@ -103,6 +109,11 @@ export default function Index() {
       </section>
 
       {/* How it works */}
+      {/* Banner: Homepage Middle */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 w-full">
+        <AdBanner position="homepage_middle" className="w-full" />
+      </div>
+
       <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 w-full">
         <div className="text-center mb-12">
           <h2 className="section-title text-3xl">Si funksionon?</h2>
