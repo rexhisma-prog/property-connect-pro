@@ -17,19 +17,23 @@ export default function Login() {
     e.preventDefault();
     if (!email) return;
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: true,
-        emailRedirectTo: 'https://www.shitepronen.com',
-      },
-    });
-    setLoading(false);
-    if (error) {
-      toast.error('Gabim: ' + error.message);
-      return;
+    try {
+      const { error } = await supabase.functions.invoke('send-magic-link', {
+        body: {
+          email,
+          redirectTo: 'https://www.shitepronen.com/dashboard',
+        },
+      });
+      if (error) {
+        toast.error('Gabim: ' + error.message);
+        return;
+      }
+      setStep('otp');
+    } catch (err) {
+      toast.error('Gabim i papritur. Ju lutem provoni përsëri.');
+    } finally {
+      setLoading(false);
     }
-    setStep('otp');
   };
 
 
