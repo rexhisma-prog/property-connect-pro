@@ -40,11 +40,29 @@ export default function Login() {
   };
 
   const handleGoogle = async () => {
-    const result = await lovable.auth.signInWithOAuth('google', {
-      redirect_uri: window.location.origin,
-    });
-    if (result?.error) {
-      toast.error('Gabim me Google: ' + (result.error as any).message);
+    const isLovableDomain =
+      window.location.hostname.includes('lovable.app') ||
+      window.location.hostname.includes('lovableproject.com');
+
+    if (isLovableDomain) {
+      // Lovable preview domains → auth-bridge works
+      const result = await lovable.auth.signInWithOAuth('google', {
+        redirect_uri: window.location.origin,
+      });
+      if (result?.error) {
+        toast.error('Gabim me Google: ' + (result.error as any).message);
+      }
+    } else {
+      // Custom domain (shitepronen.com) → Supabase OAuth direkt
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+      if (error) {
+        toast.error('Gabim me Google: ' + error.message);
+      }
     }
   };
 
