@@ -630,6 +630,7 @@ export type Database = {
           credits_remaining: number
           email: string
           full_name: string | null
+          has_password: boolean
           id: string
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
@@ -641,6 +642,7 @@ export type Database = {
           credits_remaining?: number
           email: string
           full_name?: string | null
+          has_password?: boolean
           id: string
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
@@ -652,6 +654,7 @@ export type Database = {
           credits_remaining?: number
           email?: string
           full_name?: string | null
+          has_password?: boolean
           id?: string
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
