@@ -15,11 +15,13 @@ export default function Dashboard() {
     { label: 'Kontaktet', value: '—', icon: Phone, color: 'text-purple-600', bg: 'bg-purple-50' },
   ];
 
+  const isAdmin = profile?.role === 'admin';
+
   const quickActions = [
     { to: '/dashboard/properties/new', label: 'Posto Pronë të Re', icon: Plus, primary: true },
     { to: '/dashboard/properties', label: 'Pronat e Mia', icon: Home, primary: false },
     { to: '/dashboard/credits', label: 'Blej Kredite', icon: CreditCard, primary: false },
-    { to: '/admin/analytics', label: 'Statistikat', icon: BarChart3, primary: false },
+    ...(isAdmin ? [{ to: '/admin/analytics', label: 'Statistikat', icon: BarChart3, primary: false }] : []),
   ];
 
   return (
