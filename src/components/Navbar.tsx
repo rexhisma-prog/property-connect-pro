@@ -158,7 +158,7 @@ export default function Navbar() {
                   <Link to="/login">Hyr</Link>
                 </Button>
                 <Button size="sm" className="btn-orange" asChild>
-                  <Link to="/register">Regjistrohu</Link>
+                  <Link to="/login?tab=register">Regjistrohu</Link>
                 </Button>
               </>
             )}
