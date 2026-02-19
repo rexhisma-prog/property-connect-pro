@@ -42,7 +42,7 @@ export default function Login() {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: 'https://shitepronen.com',
+        redirectTo: 'https://www.shitepronen.com',
         skipBrowserRedirect: true,
       },
     });
