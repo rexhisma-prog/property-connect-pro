@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Building2, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
+
 export default function Login() {
   const { signIn } = useAuth();
   const navigate = useNavigate();
@@ -39,34 +40,11 @@ export default function Login() {
   };
 
   const handleGoogle = async () => {
-    const isCustomDomain =
-      !window.location.hostname.includes('lovable.app') &&
-      !window.location.hostname.includes('lovableproject.com');
-
-    if (isCustomDomain) {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin,
-          skipBrowserRedirect: true,
-        },
-      });
-      if (error) {
-        toast.error('Gabim me Google: ' + error.message);
-        return;
-      }
-      if (data?.url) {
-        window.location.href = data.url;
-      }
-    } else {
-      const result = await lovable.auth.signInWithOAuth('google', {
-        redirect_uri: `${window.location.origin}/dashboard`,
-      });
-      if (result?.error) {
-        toast.error('Gabim me Google: ' + (result.error as any).message);
-      } else if (!result?.redirected) {
-        navigate('/dashboard');
-      }
+    const result = await lovable.auth.signInWithOAuth('google', {
+      redirect_uri: window.location.origin,
+    });
+    if (result?.error) {
+      toast.error('Gabim me Google: ' + (result.error as any).message);
     }
   };
 
