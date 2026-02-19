@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import logoImg from '@/assets/logo.png';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,10 @@ type RegisterStep = 'email' | 'otp' | 'set-password';
 
 export default function Login() {
   const navigate = useNavigate();
-  const [tab, setTab] = useState<'login' | 'register'>('login');
+  const [searchParams] = useSearchParams();
+  const [tab, setTab] = useState<'login' | 'register'>(
+    searchParams.get('tab') === 'register' ? 'register' : 'login'
+  );
 
   // Login state
   const [loginEmail, setLoginEmail] = useState('');
