@@ -15,9 +15,10 @@ interface Ad {
 interface AdBannerProps {
   position: 'homepage_top' | 'homepage_middle' | 'sidebar' | 'property_list_top' | 'property_details_sidebar';
   className?: string;
+  size?: 'small' | 'large'; // small = 720x90, large = 720x300
 }
 
-export default function AdBanner({ position, className = '' }: AdBannerProps) {
+export default function AdBanner({ position, className = '', size = 'small' }: AdBannerProps) {
   const [ad, setAd] = useState<Ad | null>(null);
   const { country } = useCountry();
 
@@ -72,11 +73,12 @@ export default function AdBanner({ position, className = '' }: AdBannerProps) {
   };
 
   const isSidebarCheck = position === 'sidebar' || position === 'property_details_sidebar';
-
-  const adDimensions = isSidebarCheck ? '300 × 250 px' : '728 × 90 px';
+  const bannerH = size === 'large' ? 'h-[300px]' : 'h-[90px]';
+  const bannerCls = isSidebarCheck ? 'w-[300px] h-[250px]' : `${bannerH} w-full max-w-[720px] mx-auto`;
+  const adDimensions = isSidebarCheck ? '300 × 250 px' : size === 'large' ? '720 × 300 px' : '720 × 90 px';
 
   if (!ad) return (
-    <div className={`relative overflow-hidden rounded-xl border-2 border-orange-500 bg-orange-500 flex items-center justify-center ${isSidebarCheck ? 'w-[300px] h-[250px]' : 'h-[90px] w-full max-w-[728px] mx-auto'} ${className}`}>
+    <div className={`relative overflow-hidden rounded-xl border-2 border-orange-500 bg-orange-500 flex items-center justify-center ${bannerCls} ${className}`}>
       <a href="/advertise" className="text-center group flex items-center gap-3">
         <p className="text-white font-bold group-hover:text-white/80 transition-colors">📢 Reklamo Këtu</p>
         <p className="text-white/80 text-sm font-mono">{adDimensions}</p>
@@ -87,7 +89,7 @@ export default function AdBanner({ position, className = '' }: AdBannerProps) {
   const isSidebar = isSidebarCheck;
 
   return (
-    <div className={`relative group overflow-hidden rounded-xl border border-border bg-secondary/30 ${isSidebar ? 'w-[300px] h-[250px]' : 'h-[90px] w-full max-w-[728px] mx-auto'} ${className}`}>
+    <div className={`relative group overflow-hidden rounded-xl border border-border bg-secondary/30 ${bannerCls} ${className}`}>
       {/* Reklama label */}
       <div className="absolute top-1 left-2 z-10 bg-black/60 text-white text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider">
         Reklama
