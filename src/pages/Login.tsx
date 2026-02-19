@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,13 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Building2, Loader2, Mail, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
-
 export default function Login() {
-  const navigate = useNavigate();
   const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'email' | 'otp'>('email');
   const [loading, setLoading] = useState(false);
+
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,6 +21,7 @@ export default function Login() {
       email,
       options: {
         shouldCreateUser: true,
+        emailRedirectTo: 'https://www.shitepronen.com',
       },
     });
     setLoading(false);
@@ -30,34 +29,9 @@ export default function Login() {
       toast.error('Gabim: ' + error.message);
       return;
     }
-    toast.success('Kodi u dërgua në emailin tuaj!');
     setStep('otp');
   };
 
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!otp || otp.length < 6) return;
-    setLoading(true);
-    const { data, error } = await supabase.auth.verifyOtp({
-      email,
-      token: otp,
-      type: 'email',
-    });
-    setLoading(false);
-    if (error) {
-      toast.error('Kodi i gabuar ose i skaduar. Provo përsëri.');
-      return;
-    }
-    // Check role for redirect
-    if (data.user) {
-      const { data: profile } = await supabase.from('users').select('role').eq('id', data.user.id).single();
-      if (profile?.role === 'admin') {
-        navigate('/admin');
-      } else {
-        navigate('/dashboard');
-      }
-    }
-  };
 
 
 
@@ -110,8 +84,6 @@ export default function Login() {
               <h1 className="text-2xl font-bold text-foreground mb-1">Mirë se vini!</h1>
               <p className="text-muted-foreground mb-8">Hyni ose regjistrohuni me email</p>
 
-
-
               <form onSubmit={handleSendOtp} className="space-y-4">
                 <div>
                   <Label htmlFor="email">Email</Label>
@@ -127,19 +99,19 @@ export default function Login() {
                 </div>
                 <Button type="submit" disabled={loading} className="w-full btn-orange h-11">
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
-                    <><Mail className="w-4 h-4 mr-2" />Dërgo Kodin</>
+                    <><Mail className="w-4 h-4 mr-2" />Dërgo Linkun e Hyrjes</>
                   )}
                 </Button>
               </form>
 
               <p className="text-center text-xs text-muted-foreground mt-6">
-                Do të merrni një kod 6-shifror në email për të hyrë ose u regjistruar.
+                Do të merrni një link hyrjeje në email. Klikoni atë për të hyrë.
               </p>
             </>
           ) : (
             <>
               <button
-                onClick={() => { setStep('email'); setOtp(''); }}
+                onClick={() => { setStep('email'); }}
                 className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" /> Kthehu
@@ -150,33 +122,13 @@ export default function Login() {
               </div>
               <h1 className="text-2xl font-bold text-foreground mb-1">Kontrolloni emailin</h1>
               <p className="text-muted-foreground mb-2">
-                Kemi dërguar kodin te <strong>{email}</strong>
+                Kemi dërguar një link hyrjeje te <strong>{email}</strong>
               </p>
-              <p className="text-sm text-muted-foreground mb-8">Shikoni edhe dosjen Spam nëse nuk e gjeni.</p>
+              <p className="text-sm text-muted-foreground mb-6">Klikoni butonin <strong>"Log In"</strong> në email për të hyrë në llogari.</p>
+              <p className="text-sm text-muted-foreground">Shikoni edhe dosjen <strong>Spam</strong> nëse nuk e gjeni.</p>
 
-              <form onSubmit={handleVerifyOtp} className="space-y-4">
-                <div>
-                  <Label htmlFor="otp">Kodi 6-shifror</Label>
-                  <Input
-                    id="otp"
-                    type="text"
-                    inputMode="numeric"
-                    value={otp}
-                    onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    placeholder="123456"
-                    className="mt-1 h-12 text-center text-xl tracking-widest font-mono"
-                    maxLength={6}
-                    required
-                    autoFocus
-                  />
-                </div>
-                <Button type="submit" disabled={loading || otp.length < 6} className="w-full btn-orange h-11">
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Konfirmo & Hyr'}
-                </Button>
-              </form>
-
-              <p className="text-center text-sm text-muted-foreground mt-6">
-                Nuk morët kodin?{' '}
+              <p className="text-center text-sm text-muted-foreground mt-8">
+                Nuk morët emailin?{' '}
                 <button onClick={handleSendOtp} className="text-primary hover:underline font-medium">
                   Dërgoje përsëri
                 </button>
