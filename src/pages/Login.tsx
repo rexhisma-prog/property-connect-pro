@@ -150,10 +150,10 @@ export default function Login() {
       toast.error('Fjalëkalimet nuk përputhen.');
       return;
     }
-    // Validate phone number format (04x + 6 digits)
+    // Validate phone number - international format
     const phoneClean = phoneNumber.replace(/\s/g, '');
-    if (!/^04[0-9]{8}$/.test(phoneClean)) {
-      toast.error('Numri i telefonit duhet të fillojë me 04 dhe të ketë 10 shifra (p.sh. 0456789012).');
+    if (!/^\+[1-9][0-9]{6,14}$/.test(phoneClean)) {
+      toast.error('Numri i telefonit duhet të fillojë me + dhe kodin e vendit (p.sh. +383123456789).');
       return;
     }
     setRegisterLoading(true);
@@ -382,14 +382,14 @@ export default function Login() {
                           id="phone-number"
                           type="tel"
                           value={phoneNumber}
-                          onChange={e => setPhoneNumber(e.target.value.replace(/[^0-9\s]/g, ''))}
-                          placeholder="04xxxxxxxx"
+                          onChange={e => setPhoneNumber(e.target.value.replace(/[^0-9+\s]/g, ''))}
+                          placeholder="+383 44 123 456"
                           className="h-11 pl-9"
                           required
-                          maxLength={12}
+                          maxLength={20}
                         />
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1">Format: 04xxxxxxxx (10 shifra)</p>
+                      <p className="text-xs text-muted-foreground mt-1">Format ndërkombëtar: +383 (Kosovë), +381 (Serbi), +41 (Zvicër)...</p>
                     </div>
                     <div>
                       <Label htmlFor="new-password">Fjalëkalimi i Ri</Label>
