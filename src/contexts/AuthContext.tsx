@@ -72,6 +72,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Ongoing auth changes — do NOT await inside this callback
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!isMounted) return;
+
+      // Token refresh failed → sign out cleanly
+      if (event === 'TOKEN_REFRESHED' && !session) {
+        supabase.auth.signOut();
+        setSession(null);
+        setUser(null);
+        setProfile(null);
+        return;
+      }
+
+      // Sign out or token expired
+      if (event === 'SIGNED_OUT') {
+        setSession(null);
+        setUser(null);
+        setProfile(null);
+        return;
+      }
+
       setSession(session);
       setUser(session?.user ?? null);
       if (!session?.user) {
@@ -87,13 +105,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Initial load — controls the loading spinner
     const init = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
         if (!isMounted) return;
+
+        // If session exists but refresh fails, sign out cleanly
+        if (error || (session && !session.access_token)) {
+          await supabase.auth.signOut();
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          return;
+        }
+
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
           await fetchOrCreateProfile(session.user);
         }
+      } catch {
+        // Ignore init errors
       } finally {
         if (isMounted) setLoading(false);
       }
