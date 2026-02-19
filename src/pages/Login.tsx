@@ -165,12 +165,17 @@ export default function Login() {
       }
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { error: updateError } = await supabase
+        // Use upsert so it works whether or not the row already exists
+        const { error: upsertError } = await supabase
           .from('users')
-          .update({ has_password: true, phone: phoneClean })
-          .eq('id', user.id);
-        if (updateError) {
-          if (updateError.code === '23505') {
+          .upsert({
+            id: user.id,
+            email: user.email!,
+            has_password: true,
+            phone: phoneClean,
+          }, { onConflict: 'id' });
+        if (upsertError) {
+          if (upsertError.code === '23505') {
             toast.error('Ky numër telefoni është i regjistruar tashmë me një llogari tjetër.');
             return;
           }
