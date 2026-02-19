@@ -2,32 +2,77 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from '@/components/AdminLayout';
 import { Button } from '@/components/ui/button';
-import { Check, X, Eye } from 'lucide-react';
+import { Check, X, Eye, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+
+interface AdPosition { id: string; name: string; display_name: string; }
+
+const emptyForm = {
+  title: '', advertiser_name: '', advertiser_email: '',
+  media_url: '', link_url: '', country: '', position_id: '',
+  media_type: 'image' as 'image' | 'video',
+};
 
 export default function AdminAds() {
   const [ads, setAds] = useState<any[]>([]);
+  const [positions, setPositions] = useState<AdPosition[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState(emptyForm);
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => { fetchAds(); }, [filter]);
+  useEffect(() => {
+    fetchAds();
+    fetchPositions();
+  }, [filter]);
+
+  const fetchPositions = async () => {
+    const { data } = await supabase.from('ad_positions').select('id, name, display_name').eq('is_active', true);
+    setPositions(data || []);
+  };
 
   const fetchAds = async () => {
     let query = supabase.from('ads').select('*, ad_positions(display_name)').order('created_at', { ascending: false });
-    if (filter !== 'all') query = query.eq('status', filter as 'active' | 'expired' | 'pending' | 'rejected');
+    if (filter !== 'all') query = query.eq('status', filter as any);
     const { data } = await query;
     setAds(data || []);
     setLoading(false);
   };
 
-  const approveAd = async (id: string) => {
+  const createAd = async () => {
+    if (!form.title || !form.advertiser_name || !form.position_id) {
+      toast.error('Plotëso fushat e detyrueshme (Titulli, Reklamues, Pozicioni)');
+      return;
+    }
+    setSaving(true);
     const now = new Date();
     const end = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-    await supabase.from('ads').update({
+    const { error } = await supabase.from('ads').insert({
+      title: form.title,
+      advertiser_name: form.advertiser_name,
+      advertiser_email: form.advertiser_email || 'admin@shitepronen.com',
+      media_url: form.media_url || null,
+      link_url: form.link_url || null,
+      country: form.country || null,
+      position_id: form.position_id,
+      media_type: form.media_type,
       status: 'active',
       start_date: now.toISOString(),
       end_date: end.toISOString(),
-    }).eq('id', id);
+    });
+    setSaving(false);
+    if (error) { toast.error('Gabim: ' + error.message); return; }
+    toast.success('Reklama u krijua dhe aktivizua!');
+    setShowForm(false);
+    setForm(emptyForm);
+    fetchAds();
+  };
+
+  const approveAd = async (id: string) => {
+    const now = new Date();
+    const end = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    await supabase.from('ads').update({ status: 'active', start_date: now.toISOString(), end_date: end.toISOString() }).eq('id', id);
     toast.success('Reklama u aprovua');
     fetchAds();
   };
@@ -40,8 +85,15 @@ export default function AdminAds() {
 
   const rejectAd = async (id: string) => {
     await supabase.from('ads').update({ status: 'rejected' }).eq('id', id);
-    toast.success('Reklama u refuzua');
+    toast.success('Reklama u çaktivizua');
     fetchAds();
+  };
+
+  const deleteAd = async (id: string) => {
+    if (!confirm('Fshi reklamën?')) return;
+    await supabase.from('ads').delete().eq('id', id);
+    setAds(prev => prev.filter(a => a.id !== id));
+    toast.success('Reklama u fshi');
   };
 
   const statusStyle: Record<string, string> = {
@@ -53,16 +105,90 @@ export default function AdminAds() {
 
   return (
     <AdminLayout title="Menaxhimi i Reklamave">
-      <div className="flex gap-2 mb-4 flex-wrap">
-        {['all', 'pending', 'active', 'expired', 'rejected'].map(f => (
-          <button key={f} onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all capitalize ${
-              filter === f ? 'bg-primary text-primary-foreground' : 'bg-card border border-border text-muted-foreground hover:bg-secondary'
-            }`}>
-            {f === 'all' ? 'Të gjitha' : f === 'pending' ? 'Në pritje' : f === 'active' ? 'Aktive' : f === 'expired' ? 'Skaduar' : 'Refuzuar'}
-          </button>
-        ))}
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+        <div className="flex gap-2 flex-wrap">
+          {['all', 'pending', 'active', 'expired', 'rejected'].map(f => (
+            <button key={f} onClick={() => setFilter(f)}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all capitalize ${
+                filter === f ? 'bg-primary text-primary-foreground' : 'bg-card border border-border text-muted-foreground hover:bg-secondary'
+              }`}>
+              {f === 'all' ? 'Të gjitha' : f === 'pending' ? 'Në pritje' : f === 'active' ? 'Aktive' : f === 'expired' ? 'Skaduar' : 'Refuzuar'}
+            </button>
+          ))}
+        </div>
+        <Button size="sm" className="btn-orange gap-1.5 flex-shrink-0" onClick={() => setShowForm(v => !v)}>
+          <Plus className="w-4 h-4" /> Reklama e Re
+        </Button>
       </div>
+
+      {/* Create Form */}
+      {showForm && (
+        <div className="bg-card border border-primary/30 rounded-xl p-5 mb-5 space-y-4">
+          <h3 className="font-semibold text-foreground">📢 Krijo Reklamë të Re</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Titulli *</label>
+              <input value={form.title} onChange={e => setForm(p => ({...p, title: e.target.value}))}
+                placeholder="Titulli i reklamës"
+                className="w-full text-sm border border-border rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Reklamues *</label>
+              <input value={form.advertiser_name} onChange={e => setForm(p => ({...p, advertiser_name: e.target.value}))}
+                placeholder="Emri i reklamuesit"
+                className="w-full text-sm border border-border rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">URL e Medias (foto/video)</label>
+              <input value={form.media_url} onChange={e => setForm(p => ({...p, media_url: e.target.value}))}
+                placeholder="https://..."
+                className="w-full text-sm border border-border rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">URL e Linkut (klikimi)</label>
+              <input value={form.link_url} onChange={e => setForm(p => ({...p, link_url: e.target.value}))}
+                placeholder="https://..."
+                className="w-full text-sm border border-border rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Pozicioni *</label>
+              <select value={form.position_id} onChange={e => setForm(p => ({...p, position_id: e.target.value}))}
+                className="w-full text-sm border border-border rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30">
+                <option value="">Zgjedh pozicionin...</option>
+                {positions.map(pos => (
+                  <option key={pos.id} value={pos.id}>{pos.display_name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">🎯 Shteti (Targetim)</label>
+              <select value={form.country} onChange={e => setForm(p => ({...p, country: e.target.value}))}
+                className="w-full text-sm border border-border rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30">
+                <option value="">🌍 Të gjitha (Global)</option>
+                <option value="kosovo">🇽🇰 Kosovë</option>
+                <option value="albania">🇦🇱 Shqipëri</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Lloji i Medias</label>
+              <select value={form.media_type} onChange={e => setForm(p => ({...p, media_type: e.target.value as 'image' | 'video'}))}
+                className="w-full text-sm border border-border rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30">
+                <option value="image">🖼️ Foto</option>
+                <option value="video">🎥 Video</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex gap-2 pt-1">
+            <Button size="sm" className="btn-orange" onClick={createAd} disabled={saving}>
+              {saving ? 'Duke ruajtur...' : '✓ Krijo & Aktivizo (30 ditë)'}
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => { setShowForm(false); setForm(emptyForm); }}>
+              Anulo
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
@@ -77,7 +203,7 @@ export default function AdminAds() {
             <tbody className="divide-y divide-border">
               {loading ? (
                 Array.from({ length: 4 }).map((_, i) => (
-                  <tr key={i}>{Array.from({ length: 7 }).map((_, j) => (
+                  <tr key={i}>{Array.from({ length: 8 }).map((_, j) => (
                     <td key={j} className="px-4 py-3"><div className="h-4 bg-secondary rounded animate-pulse" /></td>
                   ))}</tr>
                 ))
@@ -87,15 +213,12 @@ export default function AdminAds() {
                     <p className="font-medium text-foreground">{ad.advertiser_name}</p>
                     <p className="text-xs text-muted-foreground">{ad.advertiser_email}</p>
                   </td>
-                  <td className="px-4 py-3 font-medium">{ad.title}</td>
+                  <td className="px-4 py-3 font-medium max-w-32 truncate">{ad.title}</td>
                   <td className="px-4 py-3 text-muted-foreground text-xs">{ad.ad_positions?.display_name || '—'}</td>
                   <td className="px-4 py-3">
-                    <select
-                      value={ad.country || ''}
-                      onChange={e => setAdCountry(ad.id, e.target.value || null)}
-                      className="text-xs border border-border rounded-lg px-2 py-1 bg-background focus:outline-none"
-                    >
-                      <option value="">🌍 Të gjitha</option>
+                    <select value={ad.country || ''} onChange={e => setAdCountry(ad.id, e.target.value || null)}
+                      className="text-xs border border-border rounded-lg px-2 py-1 bg-background focus:outline-none">
+                      <option value="">🌍 Global</option>
                       <option value="kosovo">🇽🇰 Kosovë</option>
                       <option value="albania">🇦🇱 Shqipëri</option>
                     </select>
@@ -109,7 +232,7 @@ export default function AdminAds() {
                   </td>
                   <td className="px-4 py-3">
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusStyle[ad.status] || ''}`}>
-                      {ad.status}
+                      {ad.status === 'active' ? 'Aktive' : ad.status === 'pending' ? 'Në pritje' : ad.status === 'expired' ? 'Skaduar' : 'Refuzuar'}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">
@@ -118,23 +241,21 @@ export default function AdminAds() {
                   <td className="px-4 py-3">
                     <div className="flex gap-1">
                       {ad.status === 'pending' && (
-                        <>
-                          <Button size="sm" variant="outline" className="h-7 px-2 text-green-600 border-green-200"
-                            onClick={() => approveAd(ad.id)}>
-                            <Check className="w-3.5 h-3.5" />
-                          </Button>
-                          <Button size="sm" variant="outline" className="h-7 px-2 text-destructive border-red-200"
-                            onClick={() => rejectAd(ad.id)}>
-                            <X className="w-3.5 h-3.5" />
-                          </Button>
-                        </>
+                        <Button size="sm" variant="outline" className="h-7 px-2 text-green-600 border-green-200"
+                          onClick={() => approveAd(ad.id)}>
+                          <Check className="w-3.5 h-3.5" />
+                        </Button>
                       )}
-                      {ad.status === 'active' && (
-                        <Button size="sm" variant="outline" className="h-7 px-2 text-destructive"
+                      {(ad.status === 'pending' || ad.status === 'active') && (
+                        <Button size="sm" variant="outline" className="h-7 px-2 text-destructive border-red-200"
                           onClick={() => rejectAd(ad.id)}>
                           <X className="w-3.5 h-3.5" />
                         </Button>
                       )}
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-destructive hover:text-destructive"
+                        onClick={() => deleteAd(ad.id)}>
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
                     </div>
                   </td>
                 </tr>
@@ -143,7 +264,11 @@ export default function AdminAds() {
           </table>
         </div>
         {ads.length === 0 && !loading && (
-          <div className="text-center py-10 text-muted-foreground">Nuk ka reklama</div>
+          <div className="text-center py-10 text-muted-foreground">
+            <p className="text-3xl mb-2">📢</p>
+            <p className="font-medium">Nuk ka reklama ende</p>
+            <p className="text-xs mt-1">Kliko "Reklama e Re" për të shtuar reklamën e parë</p>
+          </div>
         )}
       </div>
     </AdminLayout>
