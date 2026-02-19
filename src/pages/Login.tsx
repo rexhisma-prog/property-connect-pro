@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Building2, Loader2, Mail, ArrowLeft, ShieldCheck, Lock, Eye, EyeOff } from 'lucide-react';
+import { Building2, Loader2, Mail, ArrowLeft, ShieldCheck, Lock, Eye, EyeOff, Phone } from 'lucide-react';
 import { toast } from 'sonner';
 
 type RegisterStep = 'email' | 'otp' | 'set-password';
@@ -29,6 +29,7 @@ export default function Login() {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [registerLoading, setRegisterLoading] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -149,6 +150,12 @@ export default function Login() {
       toast.error('Fjalëkalimet nuk përputhen.');
       return;
     }
+    // Validate phone number format (04x + 6 digits)
+    const phoneClean = phoneNumber.replace(/\s/g, '');
+    if (!/^04[0-9]{8}$/.test(phoneClean)) {
+      toast.error('Numri i telefonit duhet të fillojë me 04 dhe të ketë 10 shifra (p.sh. 0456789012).');
+      return;
+    }
     setRegisterLoading(true);
     try {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
@@ -158,7 +165,18 @@ export default function Login() {
       }
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await supabase.from('users').update({ has_password: true }).eq('id', user.id);
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({ has_password: true, phone: phoneClean })
+          .eq('id', user.id);
+        if (updateError) {
+          if (updateError.code === '23505') {
+            toast.error('Ky numër telefoni është i regjistruar tashmë me një llogari tjetër.');
+            return;
+          }
+          toast.error('Gabim gjatë ruajtjes së numrit të telefonit.');
+          return;
+        }
       }
       toast.success('Llogaria u krijua me sukses!');
       navigate('/dashboard');
@@ -352,10 +370,27 @@ export default function Login() {
                   <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
                     <Lock className="w-7 h-7 text-primary" />
                   </div>
-                  <h1 className="text-2xl font-bold text-foreground mb-1">Vendosni Fjalëkalimin</h1>
-                  <p className="text-muted-foreground mb-8">Krijoni fjalëkalimin tuaj personal. Herën tjetër do të hyni me email + fjalëkalim.</p>
+                  <h1 className="text-2xl font-bold text-foreground mb-1">Finalizoni Llogarinë</h1>
+                  <p className="text-muted-foreground mb-8">Vendosni numrin e telefonit dhe fjalëkalimin tuaj personal.</p>
 
                   <form onSubmit={handleSetPassword} className="space-y-4">
+                    <div>
+                      <Label htmlFor="phone-number">Numri i Telefonit</Label>
+                      <div className="relative mt-1">
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          id="phone-number"
+                          type="tel"
+                          value={phoneNumber}
+                          onChange={e => setPhoneNumber(e.target.value.replace(/[^0-9\s]/g, ''))}
+                          placeholder="04xxxxxxxx"
+                          className="h-11 pl-9"
+                          required
+                          maxLength={12}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Format: 04xxxxxxxx (10 shifra)</p>
+                    </div>
                     <div>
                       <Label htmlFor="new-password">Fjalëkalimi i Ri</Label>
                       <div className="relative mt-1">
