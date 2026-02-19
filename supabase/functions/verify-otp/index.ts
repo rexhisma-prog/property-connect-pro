@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
       .update({ used: true })
       .eq('id', otpRecord.id);
 
-    // Generate a magic link for this user so they get a real Supabase session
+    // Generate a magic link to get a token_hash for the frontend to verify
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'magiclink',
       email,
@@ -67,9 +67,13 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Extract token_hash from action_link
+    const actionUrl = new URL(linkData.properties.action_link);
+    const tokenHash = actionUrl.searchParams.get('token');
+
     return new Response(JSON.stringify({
       success: true,
-      action_link: linkData.properties.action_link,
+      token_hash: tokenHash,
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
