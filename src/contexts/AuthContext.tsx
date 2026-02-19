@@ -3,6 +3,11 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { UserProfile } from '@/lib/supabase-types';
 
+// Exported flag — Login.tsx sets this to true during OTP registration
+// to prevent auto-redirect before the user sets their password
+export let otpRegistering = false;
+export const setOtpRegistering = (val: boolean) => { otpRegistering = val; };
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -100,7 +105,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (isMounted) fetchOrCreateProfile(session.user);
         }, 0);
         // Redirect to dashboard after OAuth sign-in (e.g. Google)
-        if (event === 'SIGNED_IN' && (window.location.pathname === '/' || window.location.hash.includes('access_token'))) {
+        // Skip if OTP registration is in progress (user still needs to set password)
+        if (event === 'SIGNED_IN' && !otpRegistering && (window.location.pathname === '/' || window.location.hash.includes('access_token'))) {
           window.location.href = '/dashboard';
         }
       }

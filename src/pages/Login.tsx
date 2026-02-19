@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import logoImg from '@/assets/logo.png';
 import { supabase } from '@/integrations/supabase/client';
+import { setOtpRegistering } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -122,12 +123,15 @@ export default function Login() {
         inputRefs.current[0]?.focus();
         return;
       }
+      // Set flag to prevent auto-redirect during registration
+      setOtpRegistering(true);
       // Establish session directly with tokens from edge function
       const { error: sessionError } = await supabase.auth.setSession({
         access_token: data.access_token,
         refresh_token: data.refresh_token,
       });
       if (sessionError) {
+        setOtpRegistering(false);
         toast.error('Gabim gjatë verifikimit. Ju lutem provoni përsëri.');
         return;
       }
@@ -183,6 +187,7 @@ export default function Login() {
           return;
         }
       }
+      setOtpRegistering(false);
       toast.success('Llogaria u krijua me sukses!');
       navigate('/dashboard');
     } catch {
