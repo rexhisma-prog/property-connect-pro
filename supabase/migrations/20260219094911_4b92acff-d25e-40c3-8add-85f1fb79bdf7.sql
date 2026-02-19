@@ -1,0 +1,1 @@
+ALTER TABLE public.ads ADD COLUMN IF NOT EXISTS size text NOT NULL DEFAULT 'leaderboard';

@@ -4,6 +4,8 @@ import AdminLayout from '@/components/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Check, X, Eye, Plus, Trash2, Upload, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
+import { AD_SIZES } from '@/components/AdBanner';
+
 
 interface AdPosition { id: string; name: string; display_name: string; }
 
@@ -11,6 +13,7 @@ const emptyForm = {
   title: '', advertiser_name: '', advertiser_email: '',
   media_url: '', link_url: '', country: '', position_id: '',
   media_type: 'image' as 'image' | 'video',
+  size: 'leaderboard',
 };
 
 export default function AdminAds() {
@@ -68,6 +71,7 @@ export default function AdminAds() {
         country: ad.country || '',
         position_id: ad.position_id || '',
         media_type: ad.media_type || 'image',
+        size: ad.size || 'leaderboard',
       });
     } else {
       setEditingId(null);
@@ -93,6 +97,7 @@ export default function AdminAds() {
       country: form.country || null,
       position_id: form.position_id,
       media_type: form.media_type,
+      size: form.size,
     };
 
     if (editingId) {
@@ -225,6 +230,20 @@ export default function AdminAds() {
                 <option value="image">🖼️ Foto</option>
                 <option value="video">🎥 Video</option>
               </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">📐 Madhësia e Reklamës</label>
+              <select value={form.size} onChange={e => setForm(p => ({...p, size: e.target.value}))}
+                className={inputCls}>
+                {Object.entries(AD_SIZES).map(([key, s]) => (
+                  <option key={key} value={key}>{s.label}</option>
+                ))}
+              </select>
+              {form.size && AD_SIZES[form.size] && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {AD_SIZES[form.size].w} × {AD_SIZES[form.size].h} px
+                </p>
+              )}
             </div>
             {/* Image upload */}
             <div>
