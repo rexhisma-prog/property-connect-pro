@@ -35,9 +35,10 @@ Deno.serve(async (req) => {
       .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (fetchError || !otpRecord) {
+      console.log('OTP lookup failed:', fetchError, 'record:', otpRecord);
       return new Response(JSON.stringify({ error: 'Kodi është i gabuar ose ka skaduar.' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -50,39 +51,49 @@ Deno.serve(async (req) => {
       .update({ used: true })
       .eq('id', otpRecord.id);
 
-    // Check if user already exists in auth
-    const { data: listData } = await supabaseAdmin.auth.admin.listUsers();
-    const existingUser = listData?.users?.find((u: { email?: string }) => u.email === email);
+    // Use a temporary password to create/sign in the user
+    const tempPassword = `OTP_${code}_${Date.now()}`;
 
-    let userId: string;
+    // Check if user already exists
+    const { data: listData } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
+    const existingUser = listData?.users?.find((u: { email?: string }) => u.email?.toLowerCase() === email.toLowerCase());
 
     if (existingUser) {
-      userId = existingUser.id;
+      // User exists — update their password temporarily to sign them in
+      await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
+        password: tempPassword,
+      });
     } else {
-      // Create new auth user with a random temporary password
-      const tempPassword = crypto.randomUUID();
-      const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+      // Create new user
+      const { error: createError } = await supabaseAdmin.auth.admin.createUser({
         email,
         password: tempPassword,
         email_confirm: true,
       });
 
-      if (createError || !newUser?.user) {
+      if (createError) {
         console.error('Error creating user:', createError);
-        return new Response(JSON.stringify({ error: 'Failed to create user account' }), {
+        return new Response(JSON.stringify({ error: 'Gabim gjatë krijimit të llogarisë.' }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      userId = newUser.user.id;
     }
 
-    // Create a session for the user using admin API
-    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.createSession({ userId });
+    // Sign in with the temporary password to get a real session
+    const supabaseAnon = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+    );
 
-    if (sessionError || !sessionData?.session) {
-      console.error('Error creating session:', sessionError);
-      return new Response(JSON.stringify({ error: 'Failed to create session' }), {
+    const { data: signInData, error: signInError } = await supabaseAnon.auth.signInWithPassword({
+      email,
+      password: tempPassword,
+    });
+
+    if (signInError || !signInData?.session) {
+      console.error('Sign in error:', signInError);
+      return new Response(JSON.stringify({ error: 'Gabim gjatë hyrjes në llogari.' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -90,8 +101,8 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({
       success: true,
-      access_token: sessionData.session.access_token,
-      refresh_token: sessionData.session.refresh_token,
+      access_token: signInData.session.access_token,
+      refresh_token: signInData.session.refresh_token,
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
