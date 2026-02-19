@@ -8,21 +8,29 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
-  // Test login with anon client
-  const supabaseAnon = createClient(
+  const supabaseAdmin = createClient(
     Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_ANON_KEY')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   );
 
-  const { data, error } = await supabaseAnon.auth.signInWithPassword({
-    email: 'rexh.isma@gmail.com',
-    password: 'Admin1234!',
+  // Find user by email
+  const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+  const user = users?.find(u => u.email === 'rexh.isma@gmail.com');
+
+  if (!user) {
+    return new Response(JSON.stringify({ success: false, error: 'User not found' }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+
+  const { error } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
+    password: 'Admin!shitepronen',
   });
 
   return new Response(JSON.stringify({
     success: !error,
     error: error?.message,
-    user_id: data?.user?.id,
+    user_id: user.id,
   }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' }
   });
