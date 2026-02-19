@@ -205,23 +205,6 @@ export default function Login() {
             </Link>
           </div>
 
-          {/* Tabs — only show when not in sub-steps */}
-          {(tab === 'login' || registerStep === 'email') && (
-            <div className="flex bg-muted rounded-xl p-1 mb-8">
-              <button
-                onClick={() => setTab('login')}
-                className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${tab === 'login' ? 'bg-background shadow text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-              >
-                Hyrje
-              </button>
-              <button
-                onClick={() => { setTab('register'); setRegisterStep('email'); }}
-                className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${tab === 'register' ? 'bg-background shadow text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-              >
-                Regjistrim
-              </button>
-            </div>
-          )}
 
           {/* ── LOGIN TAB ── */}
           {tab === 'login' && (
