@@ -76,11 +76,10 @@ export default function AdBanner({ position, className = '' }: AdBannerProps) {
   const adDimensions = isSidebarCheck ? '300 × 250 px' : '728 × 90 px';
 
   if (!ad) return (
-    <div className={`relative overflow-hidden rounded-xl border-2 border-orange-500 bg-orange-500 flex items-center justify-center ${isSidebarCheck ? 'h-64' : 'h-44 sm:h-56'} ${className}`}>
-      <a href="/advertise" className="text-center group">
-        <p className="text-white text-xl font-bold group-hover:text-white/80 transition-colors">📢 Reklamo Këtu</p>
-        <p className="text-white/80 text-sm mt-2 font-mono">{adDimensions}</p>
-        <p className="text-white/60 text-xs mt-1">Kliko për të mësuar më shumë</p>
+    <div className={`relative overflow-hidden rounded-xl border-2 border-orange-500 bg-orange-500 flex items-center justify-center ${isSidebarCheck ? 'w-[300px] h-[250px]' : 'h-[90px] w-full max-w-[728px] mx-auto'} ${className}`}>
+      <a href="/advertise" className="text-center group flex items-center gap-3">
+        <p className="text-white font-bold group-hover:text-white/80 transition-colors">📢 Reklamo Këtu</p>
+        <p className="text-white/80 text-sm font-mono">{adDimensions}</p>
       </a>
     </div>
   );
@@ -88,15 +87,15 @@ export default function AdBanner({ position, className = '' }: AdBannerProps) {
   const isSidebar = isSidebarCheck;
 
   return (
-    <div className={`relative group overflow-hidden rounded-xl border border-border bg-secondary/30 ${className}`}>
+    <div className={`relative group overflow-hidden rounded-xl border border-border bg-secondary/30 ${isSidebar ? 'w-[300px] h-[250px]' : 'h-[90px] w-full max-w-[728px] mx-auto'} ${className}`}>
       {/* Reklama label */}
-      <div className="absolute top-2 left-2 z-10 bg-black/60 text-white text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider">
+      <div className="absolute top-1 left-2 z-10 bg-black/60 text-white text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider">
         Reklama
       </div>
 
       <div
         onClick={handleClick}
-        className={`cursor-pointer block w-full ${ad.link_url ? 'hover:opacity-95 transition-opacity' : ''}`}
+        className={`cursor-pointer block w-full h-full ${ad.link_url ? 'hover:opacity-95 transition-opacity' : ''}`}
       >
         {ad.media_url ? (
           ad.media_type === 'video' ? (
@@ -106,18 +105,18 @@ export default function AdBanner({ position, className = '' }: AdBannerProps) {
               muted
               loop
               playsInline
-              className={`w-full object-cover ${isSidebar ? 'h-48' : 'h-28 sm:h-36'}`}
+              className="w-full h-full object-cover"
             />
           ) : (
             <img
               src={ad.media_url}
               alt={ad.title}
-              className={`w-full object-cover ${isSidebar ? 'h-48' : 'h-28 sm:h-36'}`}
+              className="w-full h-full object-cover"
             />
           )
         ) : (
           /* Fallback text banner */
-          <div className={`flex items-center justify-center bg-gradient-to-r from-primary/10 to-accent ${isSidebar ? 'h-48' : 'h-28 sm:h-36'}`}>
+          <div className="flex items-center justify-center bg-gradient-to-r from-primary/10 to-accent w-full h-full">
             <div className="text-center px-4">
               <p className="font-bold text-foreground text-lg">{ad.title}</p>
               <p className="text-sm text-muted-foreground mt-1">{ad.advertiser_name}</p>
