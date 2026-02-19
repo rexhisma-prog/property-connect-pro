@@ -59,9 +59,10 @@ Deno.serve(async (req) => {
     const existingUser = listData?.users?.find((u: { email?: string }) => u.email?.toLowerCase() === email.toLowerCase());
 
     if (existingUser) {
-      // User exists — update their password temporarily to sign them in
+      // User exists — update their password temporarily and confirm email to sign them in
       await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
         password: tempPassword,
+        email_confirm: true,
       });
     } else {
       // Create new user
