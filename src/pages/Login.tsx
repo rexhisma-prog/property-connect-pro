@@ -42,7 +42,7 @@ export default function Login() {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: 'https://shitepronen.com/dashboard',
+        redirectTo: 'https://shitepronen.com',
         skipBrowserRedirect: true,
       },
     });
@@ -51,13 +51,6 @@ export default function Login() {
       return;
     }
     if (data?.url) {
-      console.log('OAuth URL:', data.url); // DEBUG - shikon URL-n
-      // Nëse URL kalon nëpër oauth.lovable.app (auth-bridge), bloko dhe trego gabim
-      if (data.url.includes('oauth.lovable.app')) {
-        toast.error('Google OAuth nuk është konfiguruar direkt në Supabase. Shih instruksionet.');
-        console.error('AUTH-BRIDGE DETECTED: Supabase po rut OAuth nëpër Lovable auth-bridge. Duhet konfiguruar Google OAuth direkt në Supabase.');
-        return;
-      }
       window.location.href = data.url;
     }
   };

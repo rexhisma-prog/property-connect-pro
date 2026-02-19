@@ -99,6 +99,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTimeout(() => {
           if (isMounted) fetchOrCreateProfile(session.user);
         }, 0);
+        // Redirect to dashboard after OAuth sign-in (e.g. Google)
+        if (event === 'SIGNED_IN' && window.location.pathname === '/') {
+          window.location.href = '/dashboard';
+        }
       }
     });
 
