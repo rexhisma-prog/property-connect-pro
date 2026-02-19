@@ -21,20 +21,10 @@ export default function Profile() {
 
   const validatePhone = (phone: string): string | null => {
     if (!phone) return null; // optional
-    // Remove spaces for validation
     const clean = phone.replace(/\s/g, '');
-    // Must be 04x + 6 digits (9 digits total) e.g. 044123456
-    if (!/^04[4-9]\d{6}$/.test(clean)) {
-      return 'Numri duhet të jetë në formatin 04x + 6 shifra (p.sh. 044 123 456)';
-    }
-    // Reject all-same digits: 044111111, 044222222...
-    const digits = clean.slice(3);
-    if (/^(\d)\1{5}$/.test(digits)) {
-      return 'Numri nuk është valid (shifra të njëjta)';
-    }
-    // Reject repeating patterns like 121212, 313131, 123123
-    if (/^(\d{2})\1{2}$/.test(digits) || /^(\d{3})\1$/.test(digits)) {
-      return 'Numri nuk është valid (pattern i përsëritur)';
+    // International format: + followed by 7-15 digits
+    if (!/^\+[1-9][0-9]{6,14}$/.test(clean)) {
+      return 'Numri duhet të fillojë me + dhe kodin e vendit (p.sh. +383 44 123 456)';
     }
     return null;
   };
@@ -140,14 +130,15 @@ export default function Profile() {
               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 id="phone"
+                type="tel"
                 value={form.phone}
-                onChange={e => set('phone', e.target.value)}
-                placeholder="044 123 456"
+                onChange={e => set('phone', e.target.value.replace(/[^0-9+\s]/g, ''))}
+                placeholder="+383 44 123 456"
                 className="pl-9"
-                maxLength={12}
+                maxLength={20}
               />
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Formati: 044 123 456 (04x + 6 shifra)</p>
+            <p className="text-xs text-muted-foreground mt-1">Format ndërkombëtar: +383 (Kosovë), +381 (Serbi), +41 (Zvicër)...</p>
           </div>
 
           <Button type="submit" disabled={loading} className="w-full btn-orange">

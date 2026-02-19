@@ -153,7 +153,7 @@ export default function Login() {
     // Validate phone number - international format
     const phoneClean = phoneNumber.replace(/\s/g, '');
     if (!/^\+[1-9][0-9]{6,14}$/.test(phoneClean)) {
-      toast.error('Numri i telefonit duhet të fillojë me + dhe kodin e vendit (p.sh. +383123456789).');
+      toast.error('Numri duhet të fillojë me + dhe kodin e vendit (p.sh. +383 44 123 456).');
       return;
     }
     setRegisterLoading(true);
