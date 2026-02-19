@@ -7,7 +7,7 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
-import { Plus, Edit, Trash2, Eye, Star, Zap, CheckCircle, Phone, MessageCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Star, Zap, CheckCircle, Phone, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
 function formatPrice(price: number) {
@@ -175,6 +175,13 @@ export default function MyProperties() {
                       {property.status === 'draft' && (
                         <Button size="sm" variant="default" className="btn-orange text-xs h-7 px-2 gap-1" onClick={() => handlePublish(property)}>
                           <CheckCircle className="w-3 h-3" /> Publiko
+                        </Button>
+                      )}
+                      {property.status === 'active' && (
+                        <Button size="sm" variant="default" asChild className="btn-orange text-xs h-7 px-2 gap-1">
+                          <Link to={`/dashboard/properties/${property.id}/extras`}>
+                            <Sparkles className="w-3 h-3" /> Extras
+                          </Link>
                         </Button>
                       )}
                       <Button size="sm" variant="outline" asChild className="text-xs h-7 px-2 gap-1">

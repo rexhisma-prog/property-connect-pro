@@ -25,6 +25,7 @@ import BuyCredits from "./pages/dashboard/BuyCredits";
 import EditProperty from "./pages/dashboard/EditProperty";
 import Profile from "./pages/dashboard/Profile";
 import Analytics from "./pages/dashboard/Analytics";
+import PropertyExtras from "./pages/dashboard/PropertyExtras";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -63,6 +64,7 @@ const App = () => (
             <Route path="/dashboard/properties/new" element={<ProtectedRoute><NewProperty /></ProtectedRoute>} />
             <Route path="/dashboard/credits" element={<ProtectedRoute><BuyCredits /></ProtectedRoute>} />
             <Route path="/dashboard/properties/:id/edit" element={<ProtectedRoute><EditProperty /></ProtectedRoute>} />
+            <Route path="/dashboard/properties/:id/extras" element={<ProtectedRoute><PropertyExtras /></ProtectedRoute>} />
             <Route path="/dashboard/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/dashboard/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
 
