@@ -118,6 +118,7 @@ export type Database = {
           media_type: Database["public"]["Enums"]["media_type"]
           media_url: string | null
           position_id: string | null
+          size: string
           start_date: string | null
           status: Database["public"]["Enums"]["ad_status"]
           stripe_payment_intent_id: string | null
@@ -135,6 +136,7 @@ export type Database = {
           media_type?: Database["public"]["Enums"]["media_type"]
           media_url?: string | null
           position_id?: string | null
+          size?: string
           start_date?: string | null
           status?: Database["public"]["Enums"]["ad_status"]
           stripe_payment_intent_id?: string | null
@@ -152,6 +154,7 @@ export type Database = {
           media_type?: Database["public"]["Enums"]["media_type"]
           media_url?: string | null
           position_id?: string | null
+          size?: string
           start_date?: string | null
           status?: Database["public"]["Enums"]["ad_status"]
           stripe_payment_intent_id?: string | null
