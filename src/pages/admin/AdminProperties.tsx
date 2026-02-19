@@ -5,12 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Check, X, Trash2, Eye } from 'lucide-react';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 import { Property } from '@/lib/supabase-types';
 
 export default function AdminProperties() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const navigate = useNavigate();
 
   useEffect(() => { fetchProperties(); }, [filter]);
 
@@ -106,10 +108,9 @@ export default function AdminProperties() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-1">
-                      <Button size="sm" variant="ghost" asChild className="h-7 px-2">
-                        <a href={`/properties/${p.id}`} target="_blank">
-                          <Eye className="w-3.5 h-3.5" />
-                        </a>
+                      <Button size="sm" variant="ghost" className="h-7 px-2"
+                        onClick={() => navigate(`/properties/${p.id}`)}>
+                        <Eye className="w-3.5 h-3.5" />
                       </Button>
                       <Button size="sm" variant="ghost" className="h-7 px-2 text-destructive hover:text-destructive"
                         onClick={() => deleteProperty(p.id)}>
