@@ -121,12 +121,12 @@ export default function Login() {
         inputRefs.current[0]?.focus();
         return;
       }
-      // Establish session
-      const { error: verifyError } = await supabase.auth.verifyOtp({
-        token_hash: data.token_hash,
-        type: 'magiclink',
+      // Establish session directly with tokens from edge function
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
       });
-      if (verifyError) {
+      if (sessionError) {
         toast.error('Gabim gjatë verifikimit. Ju lutem provoni përsëri.');
         return;
       }

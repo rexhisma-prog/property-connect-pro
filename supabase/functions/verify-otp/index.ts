@@ -50,30 +50,48 @@ Deno.serve(async (req) => {
       .update({ used: true })
       .eq('id', otpRecord.id);
 
-    // Generate a magic link to get a token_hash for the frontend to verify
-    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-      type: 'magiclink',
-      email,
-      options: {
-        redirectTo: 'https://www.shitepronen.com/dashboard',
-      },
-    });
+    // Check if user already exists in auth
+    const { data: listData } = await supabaseAdmin.auth.admin.listUsers();
+    const existingUser = listData?.users?.find((u: { email?: string }) => u.email === email);
 
-    if (linkError || !linkData?.properties?.action_link) {
-      console.error('Error generating session link:', linkError);
+    let userId: string;
+
+    if (existingUser) {
+      userId = existingUser.id;
+    } else {
+      // Create new auth user with a random temporary password
+      const tempPassword = crypto.randomUUID();
+      const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password: tempPassword,
+        email_confirm: true,
+      });
+
+      if (createError || !newUser?.user) {
+        console.error('Error creating user:', createError);
+        return new Response(JSON.stringify({ error: 'Failed to create user account' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      userId = newUser.user.id;
+    }
+
+    // Create a session for the user using admin API
+    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.createSession({ userId });
+
+    if (sessionError || !sessionData?.session) {
+      console.error('Error creating session:', sessionError);
       return new Response(JSON.stringify({ error: 'Failed to create session' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Extract token_hash from action_link
-    const actionUrl = new URL(linkData.properties.action_link);
-    const tokenHash = actionUrl.searchParams.get('token');
-
     return new Response(JSON.stringify({
       success: true,
-      token_hash: tokenHash,
+      access_token: sessionData.session.access_token,
+      refresh_token: sessionData.session.refresh_token,
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
