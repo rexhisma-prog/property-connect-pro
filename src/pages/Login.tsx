@@ -153,11 +153,8 @@ export default function Login() {
               />
             </div>
             <div>
-              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center justify-between mb-1">
                 <Label htmlFor="password">Fjalëkalimi</Label>
-                <Link to="/forgot-password" className="text-xs text-primary hover:underline">
-                  Harruat fjalëkalimin?
-                </Link>
               </div>
               <div className="relative">
                 <Input
