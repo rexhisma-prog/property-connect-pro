@@ -45,7 +45,7 @@ export default function Login() {
       window.location.hostname.includes('lovableproject.com');
 
     if (isLovableDomain) {
-      // Lovable preview domains → auth-bridge works
+      // Preview Lovable → auth-bridge funksionon
       const result = await lovable.auth.signInWithOAuth('google', {
         redirect_uri: window.location.origin,
       });
@@ -53,15 +53,20 @@ export default function Login() {
         toast.error('Gabim me Google: ' + (result.error as any).message);
       }
     } else {
-      // Custom domain (shitepronen.com) → Supabase OAuth direkt
-      const { error } = await supabase.auth.signInWithOAuth({
+      // Domain custom (shitepronen.com) → merr URL-në direkt, ridrejto manualisht
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/dashboard`,
+          skipBrowserRedirect: true,
         },
       });
       if (error) {
         toast.error('Gabim me Google: ' + error.message);
+        return;
+      }
+      if (data?.url) {
+        window.location.href = data.url; // ridrejto direkt te Google
       }
     }
   };
