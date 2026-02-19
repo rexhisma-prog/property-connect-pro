@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { lovable } from '@/integrations/lovable/index';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,34 +39,20 @@ export default function Login() {
   };
 
   const handleGoogle = async () => {
-    const isLovableDomain =
-      window.location.hostname.includes('lovable.app') ||
-      window.location.hostname.includes('lovableproject.com');
-
-    if (isLovableDomain) {
-      // Preview Lovable → auth-bridge funksionon
-      const result = await lovable.auth.signInWithOAuth('google', {
-        redirect_uri: window.location.origin,
-      });
-      if (result?.error) {
-        toast.error('Gabim me Google: ' + (result.error as any).message);
-      }
-    } else {
-      // Domain custom (shitepronen.com) → merr URL-në direkt, ridrejto manualisht
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`,
-          skipBrowserRedirect: true,
-        },
-      });
-      if (error) {
-        toast.error('Gabim me Google: ' + error.message);
-        return;
-      }
-      if (data?.url) {
-        window.location.href = data.url; // ridrejto direkt te Google
-      }
+    // Përdor Supabase OAuth direkt për të gjitha domain-et (me kredenciale tona Google)
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: 'https://shitepronen.com/dashboard',
+        skipBrowserRedirect: true,
+      },
+    });
+    if (error) {
+      toast.error('Gabim me Google: ' + error.message);
+      return;
+    }
+    if (data?.url) {
+      window.location.href = data.url;
     }
   };
 
