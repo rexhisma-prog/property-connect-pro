@@ -197,8 +197,8 @@ function buildEmailHtml(code: string, email: string): string {
       <td align="center">
         <table width="520" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
           <tr>
-            <td style="background:#1a1a1a;padding:28px 40px;text-align:center;">
-              <img src="https://daztdyskforqmcokwexv.supabase.co/storage/v1/object/public/property-images/branding%2Flogo.png" alt="ShitePronen.com" style="height:64px;width:auto;display:inline-block;" />
+            <td style="background:#ffffff;padding:24px 40px;text-align:center;border-bottom:3px solid #f97316;">
+              <img src="https://daztdyskforqmcokwexv.supabase.co/storage/v1/object/public/property-images/branding%2Flogo.png" alt="ShitePronen.com" style="height:56px;width:auto;display:inline-block;" />
             </td>
           </tr>
           <tr>
