@@ -21,7 +21,7 @@ export default function Dashboard() {
     { to: '/dashboard/properties/new', label: 'Posto Pronë të Re', icon: Plus, primary: true },
     { to: '/dashboard/properties', label: 'Pronat e Mia', icon: Home, primary: false },
     { to: '/dashboard/credits', label: 'Blej Kredite', icon: CreditCard, primary: false },
-    ...(isAdmin ? [{ to: '/admin/analytics', label: 'Statistikat', icon: BarChart3, primary: false }] : []),
+    { to: '/dashboard/analytics', label: 'Statistikat', icon: BarChart3, primary: false },
   ];
 
   return (
