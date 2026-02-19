@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { email, redirectTo } = await req.json();
+    const { email } = await req.json();
 
     if (!email) {
       return new Response(JSON.stringify({ error: 'Email is required' }), {
@@ -25,32 +25,35 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
-    // Generate magic link via Admin API
-    const { data, error } = await supabaseAdmin.auth.admin.generateLink({
-      type: 'magiclink',
-      email,
-      options: {
-        redirectTo: redirectTo || 'https://www.shitepronen.com/dashboard',
-      },
-    });
+    // Generate 6-digit OTP code
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
 
-    if (error || !data?.properties?.action_link) {
-      console.error('Error generating magic link:', error);
-      return new Response(JSON.stringify({ error: error?.message || 'Failed to generate magic link' }), {
+    // Invalidate any previous unused codes for this email
+    await supabaseAdmin
+      .from('otp_codes')
+      .update({ used: true })
+      .eq('email', email)
+      .eq('used', false);
+
+    // Store new OTP code (expires in 10 minutes)
+    const { error: insertError } = await supabaseAdmin
+      .from('otp_codes')
+      .insert({ email, code });
+
+    if (insertError) {
+      console.error('Error storing OTP:', insertError);
+      return new Response(JSON.stringify({ error: 'Failed to generate code' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const magicLink = data.properties.action_link;
-
-    // Send email via SMTP using fetch to smtp-compatible service
+    // Send email via SMTP
     const smtpHost = Deno.env.get('SMTP_HOST') || 'mail.privateemail.com';
     const smtpPort = parseInt(Deno.env.get('SMTP_PORT') || '465');
     const smtpUser = Deno.env.get('SMTP_USER') || '';
     const smtpPass = Deno.env.get('SMTP_PASS') || '';
 
-    // Use Deno TCP with TLS for SSL/TLS SMTP (port 465)
     const emailSent = await sendSmtpEmail({
       host: smtpHost,
       port: smtpPort,
@@ -58,8 +61,8 @@ Deno.serve(async (req) => {
       pass: smtpPass,
       to: email,
       from: `ShitePronen.com <${smtpUser}>`,
-      subject: 'Hyrja juaj në ShitePronen.com',
-      html: buildEmailHtml(magicLink, email),
+      subject: `${code} — Kodi juaj i hyrjes`,
+      html: buildEmailHtml(code, email),
     });
 
     if (!emailSent) {
@@ -94,7 +97,6 @@ async function sendSmtpEmail(opts: {
   html: string;
 }): Promise<boolean> {
   try {
-    // Connect with TLS (SSL/TLS on port 465)
     const conn = await Deno.connectTls({
       hostname: opts.host,
       port: opts.port,
@@ -103,14 +105,14 @@ async function sendSmtpEmail(opts: {
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
 
-    const readLine = async (): Promise<string> => {
-      const buf = new Uint8Array(4096);
+    const readResponse = async (): Promise<string> => {
+      const buf = new Uint8Array(8192);
       let result = '';
       while (true) {
         const n = await conn.read(buf);
         if (n === null) break;
         result += decoder.decode(buf.subarray(0, n));
-        if (result.includes('\r\n')) break;
+        if (/^\d{3} /m.test(result) || result.endsWith('\r\n')) break;
       }
       return result;
     };
@@ -119,45 +121,34 @@ async function sendSmtpEmail(opts: {
       await conn.write(encoder.encode(cmd + '\r\n'));
     };
 
-    // Read server greeting
-    await readLine();
+    await readResponse(); // greeting
 
-    // EHLO
-    await send(`EHLO shitepronen.com`);
-    let ehloResp = '';
-    while (true) {
-      const line = await readLine();
-      ehloResp += line;
-      if (line.includes('250 ') || line.match(/250[^-]/)) break;
-    }
+    await send('EHLO shitepronen.com');
+    await readResponse();
 
-    // AUTH LOGIN
     await send('AUTH LOGIN');
-    await readLine();
+    await readResponse();
     await send(btoa(opts.user));
-    await readLine();
+    await readResponse();
     await send(btoa(opts.pass));
-    const authResp = await readLine();
+    const authResp = await readResponse();
+
     if (!authResp.includes('235')) {
       console.error('SMTP auth failed:', authResp);
       conn.close();
       return false;
     }
 
-    // MAIL FROM
     await send(`MAIL FROM:<${opts.user}>`);
-    await readLine();
+    await readResponse();
 
-    // RCPT TO
     await send(`RCPT TO:<${opts.to}>`);
-    await readLine();
+    await readResponse();
 
-    // DATA
     await send('DATA');
-    await readLine();
+    await readResponse();
 
-    // Email content
-    const boundary = `boundary_${Date.now()}`;
+    const boundary = `b_${Date.now()}`;
     const message = [
       `From: ${opts.from}`,
       `To: ${opts.to}`,
@@ -167,7 +158,6 @@ async function sendSmtpEmail(opts: {
       ``,
       `--${boundary}`,
       `Content-Type: text/html; charset=utf-8`,
-      `Content-Transfer-Encoding: quoted-printable`,
       ``,
       opts.html,
       ``,
@@ -176,7 +166,8 @@ async function sendSmtpEmail(opts: {
     ].join('\r\n');
 
     await conn.write(encoder.encode(message + '\r\n'));
-    const dataResp = await readLine();
+    const dataResp = await readResponse();
+
     if (!dataResp.includes('250')) {
       console.error('SMTP data failed:', dataResp);
       conn.close();
@@ -193,56 +184,43 @@ async function sendSmtpEmail(opts: {
   }
 }
 
-function buildEmailHtml(magicLink: string, email: string): string {
+function buildEmailHtml(code: string, email: string): string {
   return `<!DOCTYPE html>
 <html lang="sq">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hyrja juaj në ShitePronen.com</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f4f4f5;font-family:Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5;padding:40px 0;">
     <tr>
       <td align="center">
-        <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-          <!-- Header -->
+        <table width="520" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
           <tr>
-            <td style="background:#1a1a1a;padding:32px 40px;text-align:center;">
+            <td style="background:#1a1a1a;padding:28px 40px;text-align:center;">
               <span style="font-size:22px;font-weight:bold;color:#ffffff;">shite<span style="color:#f97316;">pronen</span>.com</span>
             </td>
           </tr>
-          <!-- Body -->
           <tr>
-            <td style="padding:40px 40px 32px;">
-              <h1 style="margin:0 0 12px;font-size:24px;color:#111827;font-weight:700;">Mirë se vini!</h1>
-              <p style="margin:0 0 8px;color:#6b7280;font-size:15px;">Kemi marrë një kërkesë hyrjeje për:</p>
-              <p style="margin:0 0 28px;color:#111827;font-size:15px;font-weight:600;">${email}</p>
-              <p style="margin:0 0 24px;color:#6b7280;font-size:14px;">Klikoni butonin më poshtë për të hyrë në llogarinë tuaj. Ky link është i vlefshëm për <strong>60 minuta</strong>.</p>
-              <!-- CTA Button -->
-              <table cellpadding="0" cellspacing="0" style="margin:0 auto 28px;">
-                <tr>
-                  <td style="background:#f97316;border-radius:8px;">
-                    <a href="${magicLink}" style="display:inline-block;padding:14px 36px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;">
-                      Hyr në Llogari
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              <p style="margin:0 0 8px;color:#9ca3af;font-size:12px;">Nëse butoni nuk funksionon, kopjoni dhe ngjisni këtë link në shfletues:</p>
-              <p style="margin:0;word-break:break-all;font-size:11px;color:#6b7280;">${magicLink}</p>
+            <td style="padding:40px 40px 16px;text-align:center;">
+              <h1 style="margin:0 0 8px;font-size:22px;color:#111827;font-weight:700;">Kodi juaj i hyrjes</h1>
+              <p style="margin:0 0 28px;color:#6b7280;font-size:14px;">Për llogarinë: <strong>${email}</strong></p>
+              <!-- OTP Code -->
+              <div style="background:#f9fafb;border:2px dashed #e5e7eb;border-radius:12px;padding:28px 20px;margin:0 auto 28px;display:inline-block;width:100%;box-sizing:border-box;">
+                <p style="margin:0 0 8px;color:#9ca3af;font-size:12px;text-transform:uppercase;letter-spacing:2px;">Kodi juaj</p>
+                <p style="margin:0;font-size:48px;font-weight:800;letter-spacing:12px;color:#111827;font-family:monospace;">${code}</p>
+              </div>
+              <p style="margin:0 0 8px;color:#6b7280;font-size:13px;">Ky kod është i vlefshëm për <strong>10 minuta</strong>.</p>
+              <p style="margin:0 0 28px;color:#9ca3af;font-size:12px;">Nëse nuk e kërkuat këtë, mund ta injoroni emailin.</p>
             </td>
           </tr>
-          <!-- Divider -->
           <tr>
             <td style="padding:0 40px;">
               <div style="border-top:1px solid #e5e7eb;"></div>
             </td>
           </tr>
-          <!-- Footer -->
           <tr>
-            <td style="padding:24px 40px;text-align:center;">
-              <p style="margin:0 0 4px;color:#9ca3af;font-size:12px;">Nëse nuk e kërkuat këtë, mund ta injoroni këtë email.</p>
+            <td style="padding:20px 40px;text-align:center;">
               <p style="margin:0;color:#9ca3af;font-size:12px;">© 2025 ShitePronen.com — Platforma #1 e Pronave në Shqipëri</p>
             </td>
           </tr>
