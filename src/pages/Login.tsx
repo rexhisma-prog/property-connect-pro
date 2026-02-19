@@ -172,13 +172,10 @@ export default function Login() {
       <div className="hidden lg:flex lg:w-1/2 bg-foreground relative overflow-hidden items-center justify-center">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-foreground" />
         <div className="relative z-10 text-center px-12">
-          <Link to="/" className="flex items-center justify-center gap-2 mb-8">
-            <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
-              <Building2 className="w-7 h-7 text-white" />
+          <Link to="/" className="flex items-center justify-center mb-8">
+            <div className="bg-white rounded-2xl px-6 py-3 inline-flex">
+              <img src={logoImg} alt="ShitePronen.com" className="h-12 w-auto object-contain" />
             </div>
-            <span className="text-2xl font-bold text-white">
-              shite<span className="text-primary">pronen</span>.com
-            </span>
           </Link>
           <h2 className="text-3xl font-bold text-white mb-4">Platforma #1 e Pronave</h2>
           <p className="text-white/60 text-lg">Blej, shit dhe qiraje prona me lehtësi dhe besim të plotë.</p>
