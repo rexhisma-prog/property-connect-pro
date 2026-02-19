@@ -66,6 +66,12 @@ Deno.serve(async (req) => {
     });
 
     if (!emailSent) {
+      console.error('Email sending failed. SMTP config:', {
+        host: smtpHost,
+        port: smtpPort,
+        user: smtpUser ? smtpUser.substring(0, 5) + '***' : 'NOT SET',
+        passSet: !!smtpPass,
+      });
       return new Response(JSON.stringify({ error: 'Failed to send email' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -106,24 +112,29 @@ async function sendSmtpEmail(opts: {
     const decoder = new TextDecoder();
 
     const readResponse = async (): Promise<string> => {
-      const buf = new Uint8Array(8192);
+      const buf = new Uint8Array(16384);
       let result = '';
+      // Read until we get a complete response (ends with \r\n after a status line)
       while (true) {
         const n = await conn.read(buf);
         if (n === null) break;
         result += decoder.decode(buf.subarray(0, n));
-        if (/^\d{3} /m.test(result) || result.endsWith('\r\n')) break;
+        // A complete SMTP response line ends with CRLF and has 3-digit code + space
+        if (/^\d{3} .+\r\n$/m.test(result)) break;
+        if (result.endsWith('\r\n') && /^\d{3} /m.test(result)) break;
       }
+      console.log('SMTP <<', result.trim());
       return result;
     };
 
     const send = async (cmd: string) => {
+      console.log('SMTP >>', cmd.startsWith('AUTH') ? cmd : cmd.substring(0, 100));
       await conn.write(encoder.encode(cmd + '\r\n'));
     };
 
     await readResponse(); // greeting
 
-    await send('EHLO shitepronen.com');
+    await send('EHLO mail.privateemail.com');
     await readResponse();
 
     await send('AUTH LOGIN');
@@ -148,23 +159,30 @@ async function sendSmtpEmail(opts: {
     await send('DATA');
     await readResponse();
 
-    const boundary = `b_${Date.now()}`;
-    const message = [
+    // Build a simple, clean email message
+    const date = new Date().toUTCString();
+    const messageId = `<${Date.now()}.${Math.random().toString(36).slice(2)}@shitepronen.com>`;
+    
+    // Encode subject for UTF-8
+    const encodedSubject = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(opts.subject)))}?=`;
+
+    const messageLines = [
+      `Date: ${date}`,
+      `Message-ID: ${messageId}`,
       `From: ${opts.from}`,
       `To: ${opts.to}`,
-      `Subject: ${opts.subject}`,
+      `Subject: ${encodedSubject}`,
       `MIME-Version: 1.0`,
-      `Content-Type: multipart/alternative; boundary="${boundary}"`,
+      `Content-Type: text/html; charset=UTF-8`,
+      `Content-Transfer-Encoding: base64`,
       ``,
-      `--${boundary}`,
-      `Content-Type: text/html; charset=utf-8`,
+      // Base64 encode the HTML body, split into 76-char lines
+      ...btoa(unescape(encodeURIComponent(opts.html))).match(/.{1,76}/g) || [],
       ``,
-      opts.html,
-      ``,
-      `--${boundary}--`,
       `.`,
-    ].join('\r\n');
+    ];
 
+    const message = messageLines.join('\r\n');
     await conn.write(encoder.encode(message + '\r\n'));
     const dataResp = await readResponse();
 
