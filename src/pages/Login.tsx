@@ -162,6 +162,21 @@ export default function Login() {
     }
     setRegisterLoading(true);
     try {
+      // Check if phone number is already taken
+      const phoneClean2 = phoneClean;
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('phone', phoneClean2)
+        .maybeSingle();
+      
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (existingUser && currentUser && existingUser.id !== currentUser.id) {
+        toast.error('Ky numër telefoni është i regjistruar tashmë në sistem. Ju lutem përdorni një numër tjetër.');
+        setRegisterLoading(false);
+        return;
+      }
+
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) {
         toast.error('Gabim: ' + error.message);
@@ -169,7 +184,6 @@ export default function Login() {
       }
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        // Use upsert so it works whether or not the row already exists
         const { error: upsertError } = await supabase
           .from('users')
           .upsert({
@@ -180,7 +194,7 @@ export default function Login() {
           }, { onConflict: 'id' });
         if (upsertError) {
           if (upsertError.code === '23505') {
-            toast.error('Ky numër telefoni është i regjistruar tashmë me një llogari tjetër.');
+            toast.error('Ky numër telefoni është i regjistruar tashmë në sistem. Ju lutem përdorni një numër tjetër.');
             return;
           }
           toast.error('Gabim gjatë ruajtjes së numrit të telefonit.');
