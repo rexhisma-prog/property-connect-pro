@@ -36,7 +36,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
         <div className="absolute top-2 left-2 flex gap-1.5 flex-wrap">
           {isActiveFeatured && (
             <span className="badge-featured flex items-center gap-1">
-              <Star className="w-3 h-3" /> Featured
+              <Star className="w-3 h-3" /> E veçantë
             </span>
           )}
           {isActiveUrgent && (
