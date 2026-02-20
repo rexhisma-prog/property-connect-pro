@@ -7,12 +7,20 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { CreditCard, Check, Zap, Star } from 'lucide-react';
 import { toast } from 'sonner';
+import { useSearchParams } from 'react-router-dom';
 
 export default function BuyCredits() {
   const { profile } = useAuth();
   const [packages, setPackages] = useState<CreditPackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [buying, setBuying] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get('payment') === 'success') {
+      toast.success('Pagesa u krye me sukses! Kreditet do të shtohen automatikisht. 🎉');
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     supabase.from('credit_packages').select('*').eq('is_active', true).order('credits_amount')
@@ -24,9 +32,22 @@ export default function BuyCredits() {
 
   const handleBuy = async (pkg: CreditPackage) => {
     setBuying(pkg.id);
-    // In production, this would redirect to Stripe
-    toast.info('Integrimi me Stripe do të aktivizohet së shpejti. Kontaktoni: marketing@shitepronen.com');
-    setBuying(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { type: 'credit', package_id: pkg.id },
+      });
+      if (error) {
+        toast.error('Gabim gjatë krijimit të pagesës');
+        return;
+      }
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch {
+      toast.error('Gabim i papritur');
+    } finally {
+      setBuying(null);
+    }
   };
 
   const getBestValue = (credits: number) => credits >= 4;

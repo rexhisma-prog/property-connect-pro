@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from '@/components/AdminLayout';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Check, X, Trash2, Eye } from 'lucide-react';
+import { Trash2, Eye, Star, AlertCircle, Zap, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Property } from '@/lib/supabase-types';
@@ -37,19 +36,61 @@ export default function AdminProperties() {
     toast.success('Prona u fshi');
   };
 
-  const statusColors: Record<string, string> = {
-    active: 'default',
-    draft: 'secondary',
-    blocked: 'destructive',
-    sold: 'secondary',
-    archived: 'secondary',
+  const activateExtra = async (property: Property, type: 'featured' | 'urgent' | 'boost', days: number) => {
+    const now = new Date();
+    let updateData: Record<string, unknown> = {};
+
+    if (type === 'featured') {
+      const until = new Date(now.getTime() + days * 86400000);
+      updateData = { is_featured: true, featured_until: until.toISOString() };
+    } else if (type === 'urgent') {
+      const until = new Date(now.getTime() + days * 86400000);
+      updateData = { is_urgent: true, urgent_until: until.toISOString() };
+    } else if (type === 'boost') {
+      updateData = { last_boosted_at: now.toISOString() };
+    }
+
+    const { error } = await supabase.from('properties').update(updateData).eq('id', property.id);
+    if (error) {
+      toast.error('Gabim: ' + error.message);
+      return;
+    }
+
+    await supabase.from('extra_transactions').insert({
+      user_id: property.user_id,
+      property_id: property.id,
+      amount_paid: 0,
+      status: 'paid',
+    });
+
+    toast.success(`${type} u aktivizua nga admini për ${days || 1} ditë!`);
+    fetchProperties();
+  };
+
+  const addCreditsManually = async (property: Property, credits: number) => {
+    const { data: user } = await supabase.from('users').select('credits_remaining').eq('id', property.user_id).single();
+    if (!user) {
+      toast.error('Përdoruesi nuk u gjet');
+      return;
+    }
+    await supabase.from('users').update({
+      credits_remaining: user.credits_remaining + credits,
+    }).eq('id', property.user_id);
+
+    await supabase.from('credit_transactions').insert({
+      user_id: property.user_id,
+      credits_added: credits,
+      amount_paid: 0,
+      status: 'paid',
+    });
+
+    toast.success(`${credits} kredite u shtuan manualisht!`);
   };
 
   const filters = ['all', 'active', 'draft', 'blocked', 'archived'];
 
   return (
     <AdminLayout title="Menaxhimi i Pronave">
-      {/* Filter Tabs */}
       <div className="flex gap-2 mb-4 flex-wrap">
         {filters.map(f => (
           <button
@@ -86,6 +127,14 @@ export default function AdminProperties() {
                   <td className="px-4 py-3">
                     <p className="font-medium text-foreground truncate max-w-40">{p.title}</p>
                     <p className="text-xs text-muted-foreground capitalize">{p.property_type}</p>
+                    <div className="flex gap-1 mt-1">
+                      {p.is_featured && p.featured_until && new Date(p.featured_until) > new Date() && (
+                        <span className="text-[10px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">⭐ Featured</span>
+                      )}
+                      {p.is_urgent && p.urgent_until && new Date(p.urgent_until) > new Date() && (
+                        <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded">🔴 Urgent</span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{p.city}</td>
                   <td className="px-4 py-3 font-semibold text-primary">
@@ -107,10 +156,30 @@ export default function AdminProperties() {
                     {new Date(p.created_at).toLocaleDateString('sq-AL')}
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 flex-wrap">
                       <Button size="sm" variant="ghost" className="h-7 px-2"
                         onClick={() => navigate(`/properties/${p.id}`)}>
                         <Eye className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-yellow-600"
+                        title="Aktivizo Featured 30 ditë (cash)"
+                        onClick={() => activateExtra(p, 'featured', 30)}>
+                        <Star className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-red-600"
+                        title="Aktivizo Urgent 30 ditë (cash)"
+                        onClick={() => activateExtra(p, 'urgent', 30)}>
+                        <AlertCircle className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-blue-600"
+                        title="Boost tani (cash)"
+                        onClick={() => activateExtra(p, 'boost', 0)}>
+                        <Zap className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-green-600"
+                        title="Shto 1 kredit (cash)"
+                        onClick={() => addCreditsManually(p, 1)}>
+                        <CreditCard className="w-3.5 h-3.5" />
                       </Button>
                       <Button size="sm" variant="ghost" className="h-7 px-2 text-destructive hover:text-destructive"
                         onClick={() => deleteProperty(p.id)}>
