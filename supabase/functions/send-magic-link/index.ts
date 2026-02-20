@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
       user: smtpUser,
       pass: smtpPass,
       to: email,
-      from: `ShitePronen.com <${smtpUser}>`,
+      from: `ShitePronen.com <noreply@shitepronen.com>`,
       subject: `${code} — Kodi juaj i hyrjes`,
       html: buildEmailHtml(code, email),
     });
