@@ -6,15 +6,16 @@ import { setOtpRegistering } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Building2, Loader2, Mail, ArrowLeft, ShieldCheck, Lock, Eye, EyeOff, Phone } from 'lucide-react';
+import { Building2, Loader2, Mail, ArrowLeft, ShieldCheck, Lock, Eye, EyeOff, Phone, KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
 
 type RegisterStep = 'email' | 'otp' | 'set-password';
+type ForgotStep = 'email-phone' | 'otp' | 'new-password';
 
 export default function Login() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [tab, setTab] = useState<'login' | 'register'>(
+  const [tab, setTab] = useState<'login' | 'register' | 'forgot'>(
     searchParams.get('tab') === 'register' ? 'register' : 'login'
   );
 
@@ -34,6 +35,17 @@ export default function Login() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [registerLoading, setRegisterLoading] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Forgot password state
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotPhone, setForgotPhone] = useState('');
+  const [forgotStep, setForgotStep] = useState<ForgotStep>('email-phone');
+  const [forgotOtp, setForgotOtp] = useState(['', '', '', '', '', '']);
+  const [forgotNewPassword, setForgotNewPassword] = useState('');
+  const [forgotConfirmPassword, setForgotConfirmPassword] = useState('');
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const forgotOtpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // ─── LOGIN ───────────────────────────────────────────────
   const handleLogin = async (e: React.FormEvent) => {
@@ -61,11 +73,26 @@ export default function Login() {
     e?.preventDefault();
     setRegisterLoading(true);
     try {
-      const { error } = await supabase.functions.invoke('send-magic-link', {
-        body: { email: registerEmail },
+      const res = await supabase.functions.invoke('send-magic-link', {
+        body: { email: registerEmail, purpose: 'register' },
       });
-      if (error) {
-        toast.error('Gabim: ' + error.message);
+      
+      // Check for email_exists error
+      if (res.error || res.data?.error) {
+        const errorData = res.data;
+        if (errorData?.error === 'email_exists') {
+          toast.error('Ky email është i regjistruar tashmë. Përdorni hyrjen ose ndryshoni fjalëkalimin.', {
+            action: {
+              label: 'Ndrysho fjalëkalimin',
+              onClick: () => {
+                setForgotEmail(registerEmail);
+                setTab('forgot');
+              },
+            },
+          });
+          return;
+        }
+        toast.error(errorData?.message || res.error?.message || 'Gabim gjatë dërgimit të kodit.');
         return;
       }
       setRegisterStep('otp');
@@ -123,9 +150,7 @@ export default function Login() {
         inputRefs.current[0]?.focus();
         return;
       }
-      // Set flag to prevent auto-redirect during registration
       setOtpRegistering(true);
-      // Establish session directly with tokens from edge function
       const { error: sessionError } = await supabase.auth.setSession({
         access_token: data.access_token,
         refresh_token: data.refresh_token,
@@ -154,7 +179,6 @@ export default function Login() {
       toast.error('Fjalëkalimet nuk përputhen.');
       return;
     }
-    // Validate phone number - international format
     const phoneClean = phoneNumber.replace(/\s/g, '');
     if (!/^\+[1-9][0-9]{6,14}$/.test(phoneClean)) {
       toast.error('Numri duhet të fillojë me + dhe kodin e vendit (p.sh. +383 44 123 456).');
@@ -162,12 +186,10 @@ export default function Login() {
     }
     setRegisterLoading(true);
     try {
-      // Check if phone number is already taken
-      const phoneClean2 = phoneClean;
       const { data: existingUser } = await supabase
         .from('users')
         .select('id')
-        .eq('phone', phoneClean2)
+        .eq('phone', phoneClean)
         .maybeSingle();
       
       const { data: { user: currentUser } } = await supabase.auth.getUser();
@@ -211,6 +233,137 @@ export default function Login() {
     }
   };
 
+  // ─── FORGOT: SEND OTP ────────────────────────────────────
+  const handleForgotSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const phoneClean = forgotPhone.replace(/\s/g, '');
+    if (!/^\+[1-9][0-9]{6,14}$/.test(phoneClean)) {
+      toast.error('Numri duhet të fillojë me + dhe kodin e vendit (p.sh. +383 44 123 456).');
+      return;
+    }
+    setForgotLoading(true);
+    try {
+      const res = await supabase.functions.invoke('send-magic-link', {
+        body: { email: forgotEmail, purpose: 'reset', phone: phoneClean },
+      });
+      
+      if (res.error || res.data?.error) {
+        const errorData = res.data;
+        if (errorData?.error === 'phone_mismatch') {
+          toast.error('Numri i telefonit nuk përputhet me llogarinë. Kontrolloni dhe provoni përsëri.');
+        } else if (errorData?.error === 'user_not_found') {
+          toast.error('Ky email nuk është i regjistruar në sistem.');
+        } else {
+          toast.error(errorData?.message || res.error?.message || 'Gabim gjatë dërgimit të kodit.');
+        }
+        return;
+      }
+      setForgotStep('otp');
+      setForgotOtp(['', '', '', '', '', '']);
+      setTimeout(() => forgotOtpRefs.current[0]?.focus(), 100);
+    } catch {
+      toast.error('Gabim i papritur. Ju lutem provoni përsëri.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  // ─── FORGOT: OTP HANDLERS ────────────────────────────────
+  const handleForgotOtpChange = (index: number, value: string) => {
+    const digit = value.replace(/\D/g, '').slice(-1);
+    const newOtp = [...forgotOtp];
+    newOtp[index] = digit;
+    setForgotOtp(newOtp);
+    if (digit && index < 5) forgotOtpRefs.current[index + 1]?.focus();
+    if (digit && index === 5) {
+      const fullCode = [...newOtp.slice(0, 5), digit].join('');
+      if (fullCode.length === 6) verifyForgotOtp(fullCode);
+    }
+  };
+
+  const handleForgotOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !forgotOtp[index] && index > 0) {
+      forgotOtpRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleForgotOtpPaste = (e: React.ClipboardEvent) => {
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (pasted.length === 6) {
+      setForgotOtp(pasted.split(''));
+      verifyForgotOtp(pasted);
+    }
+  };
+
+  // ─── FORGOT: VERIFY OTP ──────────────────────────────────
+  const verifyForgotOtp = async (code?: string) => {
+    const finalCode = code || forgotOtp.join('');
+    if (finalCode.length !== 6) {
+      toast.error('Ju lutem plotësoni të gjitha 6 shifrat.');
+      return;
+    }
+    setForgotLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-otp', {
+        body: { email: forgotEmail, code: finalCode },
+      });
+      if (error || !data?.success) {
+        toast.error(data?.error || 'Kodi është i gabuar ose ka skaduar.');
+        setForgotOtp(['', '', '', '', '', '']);
+        forgotOtpRefs.current[0]?.focus();
+        return;
+      }
+      // Set session for password update
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+      });
+      if (sessionError) {
+        toast.error('Gabim gjatë verifikimit. Ju lutem provoni përsëri.');
+        return;
+      }
+      setForgotStep('new-password');
+    } catch {
+      toast.error('Gabim i papritur. Ju lutem provoni përsëri.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  // ─── FORGOT: SET NEW PASSWORD ─────────────────────────────
+  const handleForgotSetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (forgotNewPassword.length < 6) {
+      toast.error('Fjalëkalimi duhet të ketë të paktën 6 karaktere.');
+      return;
+    }
+    if (forgotNewPassword !== forgotConfirmPassword) {
+      toast.error('Fjalëkalimet nuk përputhen.');
+      return;
+    }
+    setForgotLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: forgotNewPassword });
+      if (error) {
+        toast.error('Gabim: ' + error.message);
+        return;
+      }
+      toast.success('Fjalëkalimi u ndryshua me sukses! Tani mund të hyni.');
+      // Reset forgot state and go to login
+      setForgotStep('email-phone');
+      setForgotEmail('');
+      setForgotPhone('');
+      setForgotNewPassword('');
+      setForgotConfirmPassword('');
+      await supabase.auth.signOut();
+      setTab('login');
+    } catch {
+      toast.error('Gabim i papritur. Ju lutem provoni përsëri.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex">
       {/* Left Panel */}
@@ -250,7 +403,6 @@ export default function Login() {
             </Link>
           </div>
 
-
           {/* ── LOGIN TAB ── */}
           {tab === 'login' && (
             <>
@@ -287,6 +439,18 @@ export default function Login() {
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     >
                       {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <div className="text-right mt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setForgotEmail(loginEmail);
+                        setTab('forgot');
+                      }}
+                      className="text-xs text-primary hover:underline"
+                    >
+                      Keni harruar fjalëkalimin?
                     </button>
                   </div>
                 </div>
@@ -451,6 +615,159 @@ export default function Login() {
                     </div>
                     <Button type="submit" disabled={registerLoading} className="w-full btn-orange h-11">
                       {registerLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Krijo Llogarinë & Hyr'}
+                    </Button>
+                  </form>
+                </>
+              )}
+            </>
+          )}
+
+          {/* ── FORGOT PASSWORD TAB ── */}
+          {tab === 'forgot' && (
+            <>
+              {/* Step: Email + Phone */}
+              {forgotStep === 'email-phone' && (
+                <>
+                  <button onClick={() => { setTab('login'); setForgotStep('email-phone'); }} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
+                    <ArrowLeft className="w-4 h-4" /> Kthehu te hyrja
+                  </button>
+                  <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
+                    <KeyRound className="w-7 h-7 text-primary" />
+                  </div>
+                  <h1 className="text-2xl font-bold text-foreground mb-1">Ndryshoni fjalëkalimin</h1>
+                  <p className="text-muted-foreground mb-8">Futni emailin dhe numrin e telefonit të llogarisë suaj për verifikim.</p>
+                  <form onSubmit={handleForgotSendOtp} className="space-y-4">
+                    <div>
+                      <Label htmlFor="forgot-email">Email</Label>
+                      <Input
+                        id="forgot-email"
+                        type="email"
+                        value={forgotEmail}
+                        onChange={e => setForgotEmail(e.target.value)}
+                        placeholder="email@shembull.com"
+                        className="mt-1 h-11"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="forgot-phone">Numri i Telefonit</Label>
+                      <div className="relative mt-1">
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          id="forgot-phone"
+                          type="tel"
+                          value={forgotPhone}
+                          onChange={e => setForgotPhone(e.target.value.replace(/[^0-9+\s]/g, ''))}
+                          placeholder="+383 44 123 456"
+                          className="h-11 pl-9"
+                          required
+                          maxLength={20}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Duhet të jetë numri i njëjtë që keni përdorur gjatë regjistrimit.</p>
+                    </div>
+                    <Button type="submit" disabled={forgotLoading} className="w-full btn-orange h-11">
+                      {forgotLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
+                        <><Mail className="w-4 h-4 mr-2" />Dërgo Kodin e Verifikimit</>
+                      )}
+                    </Button>
+                  </form>
+                </>
+              )}
+
+              {/* Step: OTP */}
+              {forgotStep === 'otp' && (
+                <>
+                  <button onClick={() => setForgotStep('email-phone')} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
+                    <ArrowLeft className="w-4 h-4" /> Kthehu
+                  </button>
+                  <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
+                    <ShieldCheck className="w-7 h-7 text-primary" />
+                  </div>
+                  <h1 className="text-2xl font-bold text-foreground mb-1">Kontrolloni emailin</h1>
+                  <p className="text-muted-foreground mb-1">Kemi dërguar një kod 6-shifror te <strong>{forgotEmail}</strong></p>
+                  <p className="text-sm text-muted-foreground mb-8">Shikoni edhe dosjen <strong>Spam</strong> nëse nuk e gjeni.</p>
+
+                  <div className="flex gap-3 justify-center mb-6" onPaste={handleForgotOtpPaste}>
+                    {forgotOtp.map((digit, i) => (
+                      <input
+                        key={i}
+                        ref={el => { forgotOtpRefs.current[i] = el; }}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={1}
+                        value={digit}
+                        onChange={e => handleForgotOtpChange(i, e.target.value)}
+                        onKeyDown={e => handleForgotOtpKeyDown(i, e)}
+                        className="w-12 h-14 text-center text-2xl font-bold border-2 rounded-xl bg-background text-foreground border-border focus:border-primary focus:outline-none transition-colors"
+                        disabled={forgotLoading}
+                      />
+                    ))}
+                  </div>
+
+                  <Button
+                    onClick={() => verifyForgotOtp()}
+                    disabled={forgotLoading || forgotOtp.join('').length !== 6}
+                    className="w-full btn-orange h-11"
+                  >
+                    {forgotLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Konfirmo Kodin'}
+                  </Button>
+
+                  <p className="text-center text-sm text-muted-foreground mt-6">
+                    Nuk morët kodin?{' '}
+                    <button onClick={() => handleForgotSendOtp({ preventDefault: () => {} } as React.FormEvent)} disabled={forgotLoading} className="text-primary hover:underline font-medium disabled:opacity-50">
+                      Dërgoje përsëri
+                    </button>
+                  </p>
+                </>
+              )}
+
+              {/* Step: New Password */}
+              {forgotStep === 'new-password' && (
+                <>
+                  <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
+                    <Lock className="w-7 h-7 text-primary" />
+                  </div>
+                  <h1 className="text-2xl font-bold text-foreground mb-1">Fjalëkalimi i Ri</h1>
+                  <p className="text-muted-foreground mb-8">Vendosni fjalëkalimin tuaj të ri.</p>
+
+                  <form onSubmit={handleForgotSetPassword} className="space-y-4">
+                    <div>
+                      <Label htmlFor="forgot-new-password">Fjalëkalimi i Ri</Label>
+                      <div className="relative mt-1">
+                        <Input
+                          id="forgot-new-password"
+                          type={showForgotPassword ? 'text' : 'password'}
+                          value={forgotNewPassword}
+                          onChange={e => setForgotNewPassword(e.target.value)}
+                          placeholder="Minimum 6 karaktere"
+                          className="h-11 pr-10"
+                          required
+                          minLength={6}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowForgotPassword(!showForgotPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        >
+                          {showForgotPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="forgot-confirm-password">Konfirmo Fjalëkalimin</Label>
+                      <Input
+                        id="forgot-confirm-password"
+                        type="password"
+                        value={forgotConfirmPassword}
+                        onChange={e => setForgotConfirmPassword(e.target.value)}
+                        placeholder="Përsëriteni fjalëkalimin"
+                        className="mt-1 h-11"
+                        required
+                      />
+                    </div>
+                    <Button type="submit" disabled={forgotLoading} className="w-full btn-orange h-11">
+                      {forgotLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Ndrysho Fjalëkalimin'}
                     </Button>
                   </form>
                 </>

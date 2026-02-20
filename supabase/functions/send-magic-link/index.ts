@@ -11,7 +11,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { email } = await req.json();
+    const { email, purpose, phone } = await req.json();
+    // purpose: "register" (default) | "reset"
 
     if (!email) {
       return new Response(JSON.stringify({ error: 'Email is required' }), {
@@ -24,6 +25,63 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
+
+    const effectivePurpose = purpose || 'register';
+
+    // Check if user already exists
+    const { data: existingUser } = await supabaseAdmin
+      .from('users')
+      .select('id, phone')
+      .eq('email', email.trim().toLowerCase())
+      .maybeSingle();
+
+    if (effectivePurpose === 'register') {
+      // If email is already registered, block registration
+      if (existingUser) {
+        return new Response(JSON.stringify({ 
+          error: 'email_exists',
+          message: 'Ky email është i regjistruar tashmë. Përdorni hyrjen ose ndryshoni fjalëkalimin.' 
+        }), {
+          status: 409,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    } else if (effectivePurpose === 'reset') {
+      // For password reset, user must exist
+      if (!existingUser) {
+        return new Response(JSON.stringify({ 
+          error: 'user_not_found',
+          message: 'Ky email nuk është i regjistruar në sistem.' 
+        }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Verify phone matches
+      if (!phone) {
+        return new Response(JSON.stringify({ 
+          error: 'phone_required',
+          message: 'Numri i telefonit është i detyrueshëm për ndryshimin e fjalëkalimit.' 
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const cleanPhone = phone.replace(/\s/g, '');
+      const storedPhone = (existingUser.phone || '').replace(/\s/g, '');
+
+      if (cleanPhone !== storedPhone) {
+        return new Response(JSON.stringify({ 
+          error: 'phone_mismatch',
+          message: 'Numri i telefonit nuk përputhet me llogarinë. Kontrolloni dhe provoni përsëri.' 
+        }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
 
     // Generate 6-digit OTP code
     const code = Math.floor(100000 + Math.random() * 900000).toString();
@@ -54,6 +112,10 @@ Deno.serve(async (req) => {
     const smtpUser = Deno.env.get('SMTP_USER') || '';
     const smtpPass = Deno.env.get('SMTP_PASS') || '';
 
+    const subjectText = effectivePurpose === 'reset' 
+      ? `${code} — Kodi për ndryshimin e fjalëkalimit`
+      : `${code} — Kodi juaj i hyrjes`;
+
     const emailSent = await sendSmtpEmail({
       host: smtpHost,
       port: smtpPort,
@@ -61,8 +123,8 @@ Deno.serve(async (req) => {
       pass: smtpPass,
       to: email,
       from: `ShitePronen.com <noreply@shitepronen.com>`,
-      subject: `${code} — Kodi juaj i hyrjes`,
-      html: buildEmailHtml(code, email),
+      subject: subjectText,
+      html: buildEmailHtml(code, email, effectivePurpose),
     });
 
     if (!emailSent) {
@@ -114,12 +176,10 @@ async function sendSmtpEmail(opts: {
     const readResponse = async (): Promise<string> => {
       const buf = new Uint8Array(16384);
       let result = '';
-      // Read until we get a complete response (ends with \r\n after a status line)
       while (true) {
         const n = await conn.read(buf);
         if (n === null) break;
         result += decoder.decode(buf.subarray(0, n));
-        // A complete SMTP response line ends with CRLF and has 3-digit code + space
         if (/^\d{3} .+\r\n$/m.test(result)) break;
         if (result.endsWith('\r\n') && /^\d{3} /m.test(result)) break;
       }
@@ -132,7 +192,7 @@ async function sendSmtpEmail(opts: {
       await conn.write(encoder.encode(cmd + '\r\n'));
     };
 
-    await readResponse(); // greeting
+    await readResponse();
 
     await send('EHLO mail.privateemail.com');
     await readResponse();
@@ -159,11 +219,9 @@ async function sendSmtpEmail(opts: {
     await send('DATA');
     await readResponse();
 
-    // Build a simple, clean email message
     const date = new Date().toUTCString();
     const messageId = `<${Date.now()}.${Math.random().toString(36).slice(2)}@shitepronen.com>`;
     
-    // Encode subject for UTF-8
     const encodedSubject = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(opts.subject)))}?=`;
 
     const messageLines = [
@@ -176,7 +234,6 @@ async function sendSmtpEmail(opts: {
       `Content-Type: text/html; charset=UTF-8`,
       `Content-Transfer-Encoding: base64`,
       ``,
-      // Base64 encode the HTML body, split into 76-char lines
       ...btoa(unescape(encodeURIComponent(opts.html))).match(/.{1,76}/g) || [],
       ``,
       `.`,
@@ -202,7 +259,12 @@ async function sendSmtpEmail(opts: {
   }
 }
 
-function buildEmailHtml(code: string, email: string): string {
+function buildEmailHtml(code: string, email: string, purpose: string): string {
+  const title = purpose === 'reset' ? 'Ndryshoni fjalëkalimin' : 'Kodi juaj i hyrjes';
+  const subtitle = purpose === 'reset' 
+    ? 'Përdorni këtë kod për të ndryshuar fjalëkalimin tuaj'
+    : `Për llogarinë: <strong>${email}</strong>`;
+  
   return `<!DOCTYPE html>
 <html lang="sq">
 <head>
@@ -221,9 +283,8 @@ function buildEmailHtml(code: string, email: string): string {
           </tr>
           <tr>
             <td style="padding:40px 40px 16px;text-align:center;">
-              <h1 style="margin:0 0 8px;font-size:22px;color:#111827;font-weight:700;">Kodi juaj i hyrjes</h1>
-              <p style="margin:0 0 28px;color:#6b7280;font-size:14px;">Për llogarinë: <strong>${email}</strong></p>
-              <!-- OTP Code -->
+              <h1 style="margin:0 0 8px;font-size:22px;color:#111827;font-weight:700;">${title}</h1>
+              <p style="margin:0 0 28px;color:#6b7280;font-size:14px;">${subtitle}</p>
               <div style="background:#f9fafb;border:2px dashed #e5e7eb;border-radius:12px;padding:28px 20px;margin:0 auto 28px;display:inline-block;width:100%;box-sizing:border-box;">
                 <p style="margin:0 0 8px;color:#9ca3af;font-size:12px;text-transform:uppercase;letter-spacing:2px;">Kodi juaj</p>
                 <p style="margin:0;font-size:48px;font-weight:800;letter-spacing:12px;color:#111827;font-family:monospace;">${code}</p>
