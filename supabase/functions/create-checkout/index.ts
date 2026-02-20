@@ -18,11 +18,11 @@ const EXTRA_PRICE_MAP: Record<string, string> = {
 
 // Mapping: credit_package DB id -> Stripe price id
 const CREDIT_PRICE_MAP: Record<string, string> = {
-  "bf0f27d0-5e6f-4ef5-a801-2e5b47ae773b": "price_1T2yIAJSjWCE502n6SYmM9X5", // 1 Kredit
-  "30bb747f-f8ec-4842-8fcc-97f6ad9cf400": "price_1T2yINJSjWCE502nNdUbYMhw", // 2 Kredite
-  "70a84b77-270b-4407-8e77-e7518a9aecdc": "price_1T2yIsJSjWCE502n1HvHNjrz", // 3 Kredite
-  "23db3644-0c61-4d3a-92fb-4edf5dbdd9f4": "price_1T2yJDJSjWCE502nDr8rhLvN", // 4 Kredite
-  "f2fc30ea-7a4b-437b-9dc9-ee61833cd96b": "price_1T2yJNJSjWCE502nbxg0BzuW", // 5 Kredite
+  "bf0f27d0-5e6f-4ef5-a801-2e5b47ae773b": "price_1T2yNkJSjWCE502nZgozA58B", // 1 Kredit €25
+  "30bb747f-f8ec-4842-8fcc-97f6ad9cf400": "price_1T2yObJSjWCE502nPXMK3Ctf", // 2 Kredite €45
+  "70a84b77-270b-4407-8e77-e7518a9aecdc": "price_1T2yOcJSjWCE502n6We565FI", // 3 Kredite €65
+  "23db3644-0c61-4d3a-92fb-4edf5dbdd9f4": "price_1T2yOdJSjWCE502nFb9Fd7lE", // 4 Kredite €83
+  "f2fc30ea-7a4b-437b-9dc9-ee61833cd96b": "price_1T2yOeJSjWCE502nooSU2OfO", // 5 Kredite €100
 };
 
 serve(async (req) => {
