@@ -9,20 +9,20 @@ const corsHeaders = {
 
 // Mapping: extra_package DB id -> Stripe price id
 const EXTRA_PRICE_MAP: Record<string, string> = {
-  "fb45d830-a31f-4672-b0f0-21c56cbc6a0c": "price_1T2yGZJSjWCE502nlFkYI02K", // Featured 7 ditë
-  "265c0179-05bb-4625-86ea-adfbff9f609f": "price_1T2yGuJSjWCE502n1h6y57OG", // Featured 30 ditë
-  "e7d37dd4-1cf0-4140-9ab7-3c2eb3c39666": "price_1T2yH6JSjWCE502nCF1JwS7w", // Urgent 7 ditë
-  "6703b740-11be-47d6-8630-23362b0e341f": "price_1T2yHLJSjWCE502nOQWJGGIo", // Urgent 30 ditë
-  "ee05665c-b402-4e7b-bf62-fc3c2b08e860": "price_1T2yHsJSjWCE502nYvy8NsJ6", // Boost
+  "fb45d830-a31f-4672-b0f0-21c56cbc6a0c": "price_1T2yg0QrJaXWFJ9D89jhV74m", // Featured 7 ditë
+  "265c0179-05bb-4625-86ea-adfbff9f609f": "price_1T2yg1QrJaXWFJ9D1VILXIfa", // Featured 30 ditë
+  "e7d37dd4-1cf0-4140-9ab7-3c2eb3c39666": "price_1T2yg2QrJaXWFJ9DZ8J5pJVp", // Urgent 7 ditë
+  "6703b740-11be-47d6-8630-23362b0e341f": "price_1T2yg3QrJaXWFJ9DhYDCwq7a", // Urgent 30 ditë
+  "ee05665c-b402-4e7b-bf62-fc3c2b08e860": "price_1T2yg5QrJaXWFJ9D8ZLFRIlR", // Boost
 };
 
 // Mapping: credit_package DB id -> Stripe price id
 const CREDIT_PRICE_MAP: Record<string, string> = {
-  "bf0f27d0-5e6f-4ef5-a801-2e5b47ae773b": "price_1T2yNkJSjWCE502nZgozA58B", // 1 Kredit €25
-  "30bb747f-f8ec-4842-8fcc-97f6ad9cf400": "price_1T2yObJSjWCE502nPXMK3Ctf", // 2 Kredite €45
-  "70a84b77-270b-4407-8e77-e7518a9aecdc": "price_1T2yOcJSjWCE502n6We565FI", // 3 Kredite €65
-  "23db3644-0c61-4d3a-92fb-4edf5dbdd9f4": "price_1T2yOdJSjWCE502nFb9Fd7lE", // 4 Kredite €83
-  "f2fc30ea-7a4b-437b-9dc9-ee61833cd96b": "price_1T2yOeJSjWCE502nooSU2OfO", // 5 Kredite €100
+  "bf0f27d0-5e6f-4ef5-a801-2e5b47ae773b": "price_1T2yftQrJaXWFJ9DruI9OhSW", // 1 Kredit €25
+  "30bb747f-f8ec-4842-8fcc-97f6ad9cf400": "price_1T2yfuQrJaXWFJ9DMA7e55hJ", // 2 Kredite €45
+  "70a84b77-270b-4407-8e77-e7518a9aecdc": "price_1T2yfvQrJaXWFJ9DLh5NwKch", // 3 Kredite €65
+  "23db3644-0c61-4d3a-92fb-4edf5dbdd9f4": "price_1T2yfwQrJaXWFJ9DYbfsbVf1", // 4 Kredite €83
+  "f2fc30ea-7a4b-437b-9dc9-ee61833cd96b": "price_1T2yfxQrJaXWFJ9DNSLt7x3L", // 5 Kredite €100
 };
 
 serve(async (req) => {
