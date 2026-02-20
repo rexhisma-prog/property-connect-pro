@@ -43,9 +43,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
       {/* Logo */}
       <div className="px-4 py-5 border-b border-sidebar-border">
         <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <Shield className="w-5 h-5 text-white" />
-          </div>
+          <img src="/favicon.png" alt="ShitePronen" className="w-8 h-8 rounded-lg" />
           <div>
             <p className="font-bold text-sidebar-foreground text-sm">Admin Panel</p>
             <p className="text-xs text-sidebar-foreground/50">shitepronen.com</p>
