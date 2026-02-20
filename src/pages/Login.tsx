@@ -247,12 +247,19 @@ export default function Login() {
         body: { email: forgotEmail, purpose: 'reset', phone: phoneClean },
       });
       
-      if (res.error || res.data?.error) {
-        const errorData = res.data;
-        if (errorData?.error === 'phone_mismatch') {
-          toast.error('Numri i telefonit nuk përputhet me llogarinë. Kontrolloni dhe provoni përsëri.');
-        } else if (errorData?.error === 'user_not_found') {
-          toast.error('Ky email nuk është i regjistruar në sistem.');
+      // Handle non-2xx: parse error body from FunctionsHttpError
+      let errorData = res.data;
+      if (res.error) {
+        try {
+          const ctx = (res.error as any).context;
+          if (ctx && typeof ctx.json === 'function') {
+            errorData = await ctx.json();
+          }
+        } catch { /* ignore parse errors */ }
+      }
+      if (res.error || errorData?.error) {
+        if (errorData?.error === 'phone_mismatch' || errorData?.error === 'user_not_found') {
+          toast.error('Emaili ose numri i telefonit është i gabuar. Ju lutem kontrolloni të dhënat dhe provoni përsëri.');
         } else {
           toast.error(errorData?.message || res.error?.message || 'Gabim gjatë dërgimit të kodit.');
         }
