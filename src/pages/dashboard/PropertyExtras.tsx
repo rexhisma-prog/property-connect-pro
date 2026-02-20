@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { ExtraPackage, Property } from '@/lib/supabase-types';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import { Loader2, Star, Zap, AlertCircle, ArrowLeft, CheckCircle, FlaskConical } from 'lucide-react';
+import { Loader2, Star, Zap, AlertCircle, ArrowLeft, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 const typeConfig = {
@@ -14,7 +14,7 @@ const typeConfig = {
     icon: Star,
     iconBg: 'bg-yellow-50',
     iconColor: 'text-yellow-500',
-    badge: '⭐ Featured',
+    badge: '⭐ E veçantë',
     badgeClass: 'bg-yellow-100 text-yellow-700',
     desc: 'Prona juaj shfaqet e para dhe me badge ⭐',
   },
@@ -22,15 +22,15 @@ const typeConfig = {
     icon: AlertCircle,
     iconBg: 'bg-red-50',
     iconColor: 'text-red-500',
-    badge: '🔴 Urgent',
+    badge: '🔴 Urgjente',
     badgeClass: 'bg-red-100 text-red-700',
-    desc: 'Badge URGENT që tërheq vëmendjen blerësve',
+    desc: 'Badge URGJENT që tërheq vëmendjen blerësve',
   },
   boost: {
     icon: Zap,
     iconBg: 'bg-blue-50',
     iconColor: 'text-blue-500',
-    badge: '⚡ Boost',
+    badge: '⚡ Ngritje',
     badgeClass: 'bg-blue-100 text-blue-700',
     desc: 'Ngritja menjëherë në krye të listës',
   },
@@ -40,20 +40,26 @@ export default function PropertyExtras() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [property, setProperty] = useState<Property | null>(null);
   const [packages, setPackages] = useState<ExtraPackage[]>([]);
-  const [testingMode, setTestingMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activating, setActivating] = useState<string | null>(null);
+
+  // Show success toast if redirected from Stripe
+  useEffect(() => {
+    if (searchParams.get('payment') === 'success') {
+      toast.success('Pagesa u krye me sukses! Extra do të aktivizohet automatikisht. 🎉');
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (!id || !user) return;
     Promise.all([
       supabase.from('properties').select('*').eq('id', id).eq('user_id', user.id).maybeSingle(),
       supabase.from('extra_packages').select('*').eq('is_active', true).order('type').order('duration_days'),
-      supabase.from('platform_settings').select('value').eq('key', 'testing_mode').maybeSingle(),
-    ]).then(([propRes, pkgRes, settingRes]) => {
+    ]).then(([propRes, pkgRes]) => {
       if (!propRes.data) {
         toast.error('Prona nuk u gjet');
         navigate('/dashboard/properties');
@@ -61,7 +67,6 @@ export default function PropertyExtras() {
       }
       setProperty(propRes.data as Property);
       setPackages((pkgRes.data as ExtraPackage[]) || []);
-      setTestingMode(settingRes.data?.value === 'true');
       setLoading(false);
     });
   }, [id, user]);
@@ -71,57 +76,30 @@ export default function PropertyExtras() {
     const now = new Date();
     if (pkg.type === 'featured') return property.is_featured && property.featured_until ? new Date(property.featured_until) > now : false;
     if (pkg.type === 'urgent') return property.is_urgent && property.urgent_until ? new Date(property.urgent_until) > now : false;
-    return false; // boost has no expiry check
+    return false;
   };
 
   const handleActivate = async (pkg: ExtraPackage) => {
     if (!property || !user) return;
-
-    if (!testingMode) {
-      toast.info('Pagesa me Stripe do të aktivizohet së shpejti. Kontaktoni: marketing@shitepronen.com');
-      return;
-    }
-
     setActivating(pkg.id);
+
     try {
-      const now = new Date();
-      let updateData: Record<string, unknown> = {};
-
-      if (pkg.type === 'featured') {
-        const until = new Date(now);
-        until.setDate(until.getDate() + pkg.duration_days);
-        updateData = { is_featured: true, featured_until: until.toISOString() };
-      } else if (pkg.type === 'urgent') {
-        const until = new Date(now);
-        until.setDate(until.getDate() + pkg.duration_days);
-        updateData = { is_urgent: true, urgent_until: until.toISOString() };
-      } else if (pkg.type === 'boost') {
-        updateData = { last_boosted_at: now.toISOString() };
-      }
-
-      const { error } = await supabase
-        .from('properties')
-        .update(updateData)
-        .eq('id', property.id)
-        .eq('user_id', user.id);
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: {
+          type: 'extra',
+          package_id: pkg.id,
+          property_id: property.id,
+        },
+      });
 
       if (error) {
-        toast.error('Gabim: ' + error.message);
+        toast.error('Gabim gjatë krijimit të pagesës');
         return;
       }
 
-      // Log transaction
-      await supabase.from('extra_transactions').insert({
-        user_id: user.id,
-        property_id: property.id,
-        extra_package_id: pkg.id,
-        amount_paid: testingMode ? 0 : pkg.price_eur,
-        status: 'paid',
-      });
-
-      // Update local state
-      setProperty(prev => prev ? { ...prev, ...updateData } as Property : prev);
-      toast.success(`${pkg.name} u aktivizua me sukses! 🎉`);
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
     } catch {
       toast.error('Gabim i papritur.');
     } finally {
@@ -150,7 +128,6 @@ export default function PropertyExtras() {
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
       <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 py-8 w-full">
-        {/* Header */}
         <button
           onClick={() => navigate('/dashboard/properties')}
           className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
@@ -159,11 +136,6 @@ export default function PropertyExtras() {
         </button>
 
         <div className="text-center mb-8">
-          {testingMode && (
-            <div className="inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200 text-amber-700 text-xs font-medium px-3 py-1.5 rounded-full mb-4">
-              <FlaskConical className="w-3.5 h-3.5" /> Modalitet Testimi — Aktivizimi është falas
-            </div>
-          )}
           <h1 className="text-2xl font-bold text-foreground">Extras – Shto Dukshmëri</h1>
           <p className="text-muted-foreground mt-1">Rritni gjasat e shitjes me opsione premium</p>
           {property && (
@@ -171,7 +143,6 @@ export default function PropertyExtras() {
           )}
         </div>
 
-        {/* Package groups */}
         <div className="space-y-8">
           {(Object.entries(grouped) as [keyof typeof typeConfig, ExtraPackage[]][]).map(([type, pkgs]) => {
             if (!pkgs.length) return null;
@@ -185,7 +156,9 @@ export default function PropertyExtras() {
                     <Icon className={`w-4 h-4 ${cfg.iconColor}`} />
                   </div>
                   <div>
-                    <h2 className="font-semibold text-foreground capitalize">{type === 'boost' ? 'Boost' : type.charAt(0).toUpperCase() + type.slice(1)}</h2>
+                    <h2 className="font-semibold text-foreground capitalize">
+                      {type === 'boost' ? 'Ngritje' : type === 'featured' ? 'E veçantë' : 'Urgjente'}
+                    </h2>
                     <p className="text-xs text-muted-foreground">{cfg.desc}</p>
                   </div>
                 </div>
@@ -216,9 +189,7 @@ export default function PropertyExtras() {
                         <p className="text-xs text-muted-foreground mb-4">{cfg.desc}</p>
 
                         <div className="flex items-center justify-between">
-                          <span className="text-2xl font-bold text-primary">
-                            {testingMode ? <span className="text-green-600 text-lg">Falas</span> : `€${pkg.price_eur}`}
-                          </span>
+                          <span className="text-2xl font-bold text-primary">€{pkg.price_eur}</span>
                           <Button
                             size="sm"
                             variant={active ? 'secondary' : 'outline'}
@@ -231,7 +202,7 @@ export default function PropertyExtras() {
                             ) : active ? (
                               '✓ Aktiv'
                             ) : (
-                              'Aktivizo'
+                              'Paguaj'
                             )}
                           </Button>
                         </div>
@@ -244,14 +215,11 @@ export default function PropertyExtras() {
           })}
         </div>
 
-        {/* Info */}
-        {!testingMode && (
-          <div className="mt-8 bg-secondary rounded-xl p-5 text-sm text-muted-foreground">
-            <p className="font-medium text-foreground mb-1">ℹ️ Si funksionon pagesa?</p>
-            <p>Pagesa processohet nëpërmjet Stripe. Pas pagesës, extra aktivizohet menjëherë automatikisht.</p>
-            <p className="mt-1">Kontakti: <a href="mailto:marketing@shitepronen.com" className="text-primary hover:underline">marketing@shitepronen.com</a></p>
-          </div>
-        )}
+        <div className="mt-8 bg-secondary rounded-xl p-5 text-sm text-muted-foreground">
+          <p className="font-medium text-foreground mb-1">ℹ️ Si funksionon pagesa?</p>
+          <p>Pagesa processohet nëpërmjet Stripe. Pas pagesës, extra aktivizohet menjëherë automatikisht.</p>
+          <p className="mt-1">Për pagesë me para në dorë, kontaktoni: <a href="mailto:marketing@shitepronen.com" className="text-primary hover:underline">marketing@shitepronen.com</a></p>
+        </div>
       </main>
       <Footer />
     </div>
